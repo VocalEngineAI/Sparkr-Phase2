@@ -1,0 +1,7 @@
+{
+  "name": "@sparkr/ui",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./theme.js",
+  "types": "./theme.d.ts"
+}
