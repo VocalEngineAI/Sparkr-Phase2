@@ -19,6 +19,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 import { colors } from "@sparkr/ui";
 import FloatingCards from "./FloatingCards";
 
@@ -175,6 +176,8 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
 
   return (
     <Animated.View style={[StyleSheet.absoluteFill, styles.root, screenStyle]}>
+      {/* Mounted last, so it wins over the welcome screen's light status bar until we fade. */}
+      <StatusBar style="dark" />
       <Pressable style={StyleSheet.absoluteFill} onPress={finish}>
         <FloatingCards active={cardsActive} />
 

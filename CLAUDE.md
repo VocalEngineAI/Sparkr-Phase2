@@ -61,7 +61,10 @@ first run — only do that if asked.
 
 - **One binary, two roles.** `src/context/AuthContext.tsx` holds a mock `role`
   (`business` | `influencer` | null). `src/navigation/RootNavigator.tsx` switches on it:
-  null → `RoleSelectScreen`, otherwise `BusinessTabNavigator` or `InfluencerTabNavigator`.
+  null → `AuthNavigator` (welcome video reel → sign up / log in), otherwise
+  `BusinessTabNavigator` or `InfluencerTabNavigator`. Auth is mocked: submitting the form just
+  calls `signInAs(role)`. The animated splash overlays everything on launch; `useSplashDone()`
+  tells screens underneath when it has gone.
   Screens live under `src/screens/{auth,business,influencer}/`.
 - **Navigation is React Navigation (bottom tabs), not Expo Router.** `apps/business-app/AGENTS.md`
   is the stock Expo template and says to use Expo Router in `src/app/` — ignore that part;

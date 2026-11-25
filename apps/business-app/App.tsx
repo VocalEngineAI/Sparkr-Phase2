@@ -1,9 +1,9 @@
 import "./global.css";
 import React, { useState } from "react";
-import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "./src/context/AuthContext";
+import { SplashDoneContext } from "./src/context/SplashContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import AnimatedSplash from "./src/components/splash/AnimatedSplash";
 
@@ -18,9 +18,10 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <RootNavigator />
+        <SplashDoneContext.Provider value={splashDone}>
+          <RootNavigator />
+        </SplashDoneContext.Provider>
         {splashDone ? null : <AnimatedSplash onFinish={() => setSplashDone(true)} />}
-        <StatusBar style="dark" />
       </AuthProvider>
     </SafeAreaProvider>
   );
