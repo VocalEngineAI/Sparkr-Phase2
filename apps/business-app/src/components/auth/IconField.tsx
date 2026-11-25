@@ -1,5 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, TextInputProps, View } from "react-native";
+import Animated, {
+  Easing,
+  interpolate,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@sparkr/ui";
 import { Input } from "../ui/input";
@@ -7,8 +15,10 @@ import { cn } from "../../lib/utils";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
-// Text field with a leading icon (or a prefix such as a dial code) and an optional
-// trailing control. `secure` turns it into a password field with a show/hide toggle.
+// White outlined text field with a leading icon (or a prefix such as a dial code), an
+// optional trailing control and a floating label: `placeholder` sits inside the field
+// while it's empty and lifts onto the top outline as soon as the field is focused or has
+// a value. `secure` turns it into a password field with a show/hide toggle.
 type Props = TextInputProps & {
   icon?: IconName;
   prefix?: React.ReactNode;
@@ -17,15 +27,44 @@ type Props = TextInputProps & {
   className?: string;
 };
 
-export default function IconField({ icon, prefix, trailing, secure, className, ...input }: Props) {
+const FIELD_HEIGHT = 56; // h-14
+const LABEL_INSET = 14; // where the floated label sits from the left edge
+
+export default function IconField({
+  icon,
+  prefix,
+  trailing,
+  secure,
+  className,
+  placeholder,
+  value,
+  ...input
+}: Props) {
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(!!secure);
+  const floated = focused || !!value;
   const tint = focused ? colors.accent : colors.textMuted;
+
+  const float = useSharedValue(floated ? 1 : 0);
+  useEffect(() => {
+    float.value = withTiming(floated ? 1 : 0, { duration: 180, easing: Easing.out(Easing.quad) });
+  }, [floated]);
+
+  // Resting position of the label: after the icon / prefix, vertically centred.
+  const restingLeft = prefix ? 96 : icon ? 48 : 16;
+  const labelStyle = useAnimatedStyle(() => ({
+    top: interpolate(float.value, [0, 1], [FIELD_HEIGHT / 2 - 10, -9]),
+    left: interpolate(float.value, [0, 1], [restingLeft, LABEL_INSET]),
+    fontSize: interpolate(float.value, [0, 1], [16, 12]),
+    // A white chip behind the floated label breaks the outline, like a notched field.
+    backgroundColor: interpolateColor(float.value, [0, 1], ["rgba(255,255,255,0)", colors.background]),
+  }));
 
   return (
     <View className={cn("relative justify-center", className)}>
       <Input
         {...input}
+        value={value}
         secureTextEntry={secure ? hidden : input.secureTextEntry}
         onFocus={(e) => {
           setFocused(true);
@@ -36,13 +75,32 @@ export default function IconField({ icon, prefix, trailing, secure, className, .
           input.onBlur?.(e);
         }}
         className={cn(
-          "h-14 rounded-2xl",
+          "h-14 rounded-2xl bg-background",
           icon && "pl-12",
           prefix && "pl-24",
           (trailing || secure) && "pr-12",
-          focused && "border-accent bg-background"
+          focused && "border-accent"
         )}
       />
+
+      {placeholder ? (
+        <Animated.Text
+          pointerEvents="none"
+          numberOfLines={1}
+          style={[
+            labelStyle,
+            {
+              position: "absolute",
+              paddingHorizontal: 4,
+              borderRadius: 4,
+              color: floated && focused ? colors.accent : colors.textMuted,
+              fontFamily: floated ? "DMSans_500Medium" : "DMSans_400Regular",
+            },
+          ]}
+        >
+          {placeholder}
+        </Animated.Text>
+      ) : null}
 
       {icon ? (
         <View className="absolute left-4" pointerEvents="none">

@@ -29,7 +29,13 @@
         }
       ],
       "expo-video",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Sparkr uses the camera to take your profile photo."
+        }
+      ]
     ]
   }
 }

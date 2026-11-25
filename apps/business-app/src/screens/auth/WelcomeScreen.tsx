@@ -179,7 +179,7 @@ export default function WelcomeScreen({ navigation }: Props) {
         </Animated.View>
 
         <Pressable
-          onPress={() => navigation.navigate("CreateAccount")}
+          onPress={() => navigation.navigate("ChooseRole")}
           className="bg-linen rounded-2xl py-4 items-center active:opacity-80"
         >
           <Text className="text-navy text-base font-bold">Get started</Text>

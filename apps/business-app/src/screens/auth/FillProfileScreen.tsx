@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, Pressable, View } from "react-native";
+import { Alert, Image, Pressable, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@sparkr/ui";
@@ -14,7 +14,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, "FillProfile">;
 const GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
 
 export default function FillProfileScreen({ navigation, route }: Props) {
-  const { role, email: signupEmail } = route.params;
+  const { role, email: signupEmail, photoUri } = route.params; // photoUri comes back from CapturePhoto
   const isBusiness = role === "business";
 
   const [fullName, setFullName] = useState("");
@@ -39,14 +39,18 @@ export default function FillProfileScreen({ navigation, route }: Props) {
 
   return (
     <AuthShell onBack={() => navigation.goBack()} title="Fill Your Profile">
-      {/* Avatar with an edit badge. Photo upload isn't wired up yet. */}
+      {/* Avatar with an edit badge; tapping opens the camera. */}
       <Pressable
-        onPress={() => Alert.alert("Profile photo", "Photo upload isn't available yet.")}
+        onPress={() => navigation.navigate("CapturePhoto", { role, email: signupEmail })}
         className="self-center mb-8"
-        accessibilityLabel="Add profile photo"
+        accessibilityLabel={photoUri ? "Retake profile photo" : "Add profile photo"}
       >
         <View className="w-32 h-32 rounded-full bg-surface border border-border items-center justify-center overflow-hidden">
-          <Ionicons name="person" size={64} color={colors.border} />
+          {photoUri ? (
+            <Image source={{ uri: photoUri }} className="w-full h-full" resizeMode="cover" />
+          ) : (
+            <Ionicons name="person" size={64} color={colors.border} />
+          )}
         </View>
         <View className="absolute right-1 bottom-1 w-8 h-8 rounded-lg bg-accent items-center justify-center">
           <Ionicons name="pencil" size={15} color={colors.navy} />
@@ -94,7 +98,7 @@ export default function FillProfileScreen({ navigation, route }: Props) {
         />
         <Pressable
           onPress={pickGender}
-          className="h-14 rounded-2xl bg-surface border border-border px-4 flex-row items-center justify-between"
+          className="h-14 rounded-2xl bg-background border border-border px-4 flex-row items-center justify-between"
           accessibilityRole="button"
         >
           <Text className={gender ? "text-base" : "text-base text-textMuted/70"}>{gender || "Gender"}</Text>

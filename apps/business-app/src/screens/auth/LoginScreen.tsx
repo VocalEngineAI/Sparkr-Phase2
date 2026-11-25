@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import { Alert, Pressable, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { AuthRole, AuthStackParamList } from "../../navigation/AuthNavigator";
+import type { AuthStackParamList } from "../../navigation/AuthNavigator";
 import { useAuth } from "../../context/AuthContext";
 import AuthShell from "../../components/auth/AuthShell";
 import IconField from "../../components/auth/IconField";
 import Checkbox from "../../components/auth/Checkbox";
 import PrimaryButton from "../../components/auth/PrimaryButton";
 import FooterLink from "../../components/auth/FooterLink";
-import RoleSelector from "../../components/auth/RoleSelector";
 import { OrDivider, SocialRow } from "../../components/auth/Social";
 import { Text } from "../../components/ui/text";
 
@@ -16,9 +15,9 @@ type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
 
 const EMAIL = /^\S+@\S+\.\S+$/;
 
-export default function LoginScreen({ navigation }: Props) {
+export default function LoginScreen({ navigation, route }: Props) {
   const { signInAs } = useAuth();
-  const [role, setRole] = useState<AuthRole>("business");
+  const { role } = route.params;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -39,15 +38,16 @@ export default function LoginScreen({ navigation }: Props) {
         <FooterLink
           prompt="Don't have an account?"
           action="Sign up"
-          onPress={() => navigation.navigate("CreateAccount")}
+          onPress={() => navigation.navigate("CreateAccount", { role })}
         />
       }
     >
-      <Text className="text-[34px] leading-[40px] font-extrabold mb-6">Login to your{"\n"}Account</Text>
+      <Text className="text-[34px] leading-[40px] font-extrabold mb-1">Login to your{"\n"}Account</Text>
+      <Text className="text-base text-textMuted mb-6">
+        {role === "business" ? "Business account" : "Influencer account"}
+      </Text>
 
-      <RoleSelector value={role} onChange={setRole} />
-
-      <View className="gap-4 mt-6">
+      <View className="gap-4">
         <IconField
           icon="mail-outline"
           value={email}
