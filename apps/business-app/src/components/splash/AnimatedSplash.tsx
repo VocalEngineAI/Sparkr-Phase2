@@ -14,8 +14,8 @@ import { colors } from "@sparkr/ui";
 import FlipLetters, { LETTER_TAIL } from "./FlipLetters";
 
 /*
- * In-app half of the splash. The native splash (app.json → expo-splash-screen) is plain
- * linen; this component takes over with the same linen frame, then plays:
+ * In-app half of the splash. The native splash (app.json → expo-splash-screen) is the plain
+ * app background; this component takes over with the same blank frame, then plays:
  *
  *   a navy ball drops in from the top → lands at the centre, squashes and bounces once →
  *   swells until it floods the whole screen navy → the S mark fades in and "SPARKR MEDIA"
@@ -208,7 +208,7 @@ function LogoMark() {
 }
 
 const styles = StyleSheet.create({
-  root: { backgroundColor: colors.linen, zIndex: 100 },
+  root: { backgroundColor: colors.background, zIndex: 100 },
   center: { alignItems: "center", justifyContent: "center" },
   ball: {
     width: BALL,

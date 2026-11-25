@@ -88,7 +88,7 @@ export default function WelcomeScreen({ navigation }: Props) {
   };
 
   return (
-    <View className="flex-1 bg-linen">
+    <View className="flex-1 bg-background">
       <StatusBar style={isFocused ? "light" : "dark"} />
 
       {/* Edge to edge on any screen shape: the view is exactly the screen and the player's
@@ -178,9 +178,8 @@ export default function WelcomeScreen({ navigation }: Props) {
           <Text className="text-linen/80 text-base leading-6">{copy.body}</Text>
         </Animated.View>
 
-        {/* One way in: the sign-up screen carries its own "Already have an account?" switch. */}
         <Pressable
-          onPress={() => navigation.navigate("Auth", { mode: "signup" })}
+          onPress={() => navigation.navigate("CreateAccount")}
           className="bg-linen rounded-2xl py-4 items-center active:opacity-80"
         >
           <Text className="text-navy text-base font-bold">Get started</Text>
