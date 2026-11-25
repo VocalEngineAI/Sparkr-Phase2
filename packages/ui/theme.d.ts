@@ -1,4 +1,7 @@
 export declare const colors: {
+  linen: string;
+  navy: string;
+  amber: string;
   primary: string;
   primaryLight: string;
   accent: string;
