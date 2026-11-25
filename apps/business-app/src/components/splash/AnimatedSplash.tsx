@@ -19,17 +19,13 @@ import FlipLetters, { LETTER_TAIL } from "./FlipLetters";
  *
  *   a navy ball drops in from the top → lands at the centre, squashes and bounces once →
  *   swells until it floods the whole screen navy → the S mark fades in and "SPARKR MEDIA"
- *   flips letter by letter beneath it, around each letter's horizontal axis → the lockup
- *   fades, leaving plain navy.
- *
- * The navy is handed over, not faded out: the welcome screen underneath starts with the
- * same full-screen navy, pulls it back into the ball, then drops the ball into the
- * "Get started" button — so the two screens read as one continuous animation.
+ *   flips letter by letter beneath it, around each letter's horizontal axis → fade into
+ *   the app.
  *
  * Tap anywhere to skip.
  */
 
-export const BALL = 72; // diameter, px — the welcome screen rebuilds this ball from the fill
+const BALL = 72; // diameter, px
 
 // assets/splash-s.png is a navy silhouette, so it tints linen to read on the navy fill.
 const S_LOGO_WIDTH = 60;
@@ -63,16 +59,15 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
   const ballScaleX = useSharedValue(1);
   const ballScaleY = useSharedValue(1);
   const ballGrow = useSharedValue(1); // 1 = ball, FILL_SCALE = covers the screen
-  const lockupOpacity = useSharedValue(1);
+  const screenOpacity = useSharedValue(1);
 
   // Scale that takes the ball's circle past every screen corner.
   const fillScale = (Math.hypot(W, H) / BALL) * 1.05;
 
-  // Only the lockup fades; the navy stays put for the welcome screen to pick up.
   const finish = useCallback(() => {
     if (finished.current) return;
     finished.current = true;
-    lockupOpacity.value = withTiming(0, { duration: TIMING.fadeOut });
+    screenOpacity.value = withTiming(0, { duration: TIMING.fadeOut });
     setTimeout(onFinish, TIMING.fadeOut);
   }, [onFinish]);
 
@@ -151,10 +146,10 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
       { scaleY: ballScaleY.value * ballGrow.value },
     ],
   }));
-  const lockupStyle = useAnimatedStyle(() => ({ opacity: lockupOpacity.value }));
+  const screenStyle = useAnimatedStyle(() => ({ opacity: screenOpacity.value }));
 
   return (
-    <View style={[StyleSheet.absoluteFill, styles.root]}>
+    <Animated.View style={[StyleSheet.absoluteFill, styles.root, screenStyle]}>
       <StatusBar style={filled ? "light" : "dark"} />
       <Pressable style={StyleSheet.absoluteFill} onPress={finish}>
         <View style={[StyleSheet.absoluteFill, styles.center]} pointerEvents="none">
@@ -162,10 +157,7 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
         </View>
 
         {showLockup && (
-          <Animated.View
-            style={[StyleSheet.absoluteFill, styles.center, lockupStyle]}
-            pointerEvents="none"
-          >
+          <View style={[StyleSheet.absoluteFill, styles.center]} pointerEvents="none">
             <LogoMark />
             <View style={styles.wordRow}>
               <FlipLetters
@@ -183,10 +175,10 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
                 seed={37} // a different pattern from SPARKR's
               />
             </View>
-          </Animated.View>
+          </View>
         )}
       </Pressable>
-    </View>
+    </Animated.View>
   );
 }
 

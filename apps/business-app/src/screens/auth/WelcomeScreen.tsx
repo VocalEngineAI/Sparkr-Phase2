@@ -7,20 +7,8 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { useEventListener } from "expo";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  Easing,
-  FadeInDown,
-  interpolate,
-  interpolateColor,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { colors } from "@sparkr/ui";
-import { BALL } from "../../components/splash/AnimatedSplash";
 import type { AuthStackParamList } from "../../navigation/AuthNavigator";
 import { useSplashDone } from "../../context/SplashContext";
 
@@ -31,17 +19,6 @@ const REEL = require("../../../assets/welcome/welcome-reel.mp4");
 const SEGMENT_SECONDS = 4;
 // Scrim height as a multiple of the caption block, so it reaches above the text.
 const SCRIM_REACH = 1.9;
-
-// The splash hands over a full-screen navy fill. It pulls back into the splash's ball at the
-// centre (revealing this screen), pauses, then drops into the button and stretches to fit.
-const MORPH_DELAY = 120;
-const CONTRACT_MS = 620;
-const BALL_HOLD_MS = 140;
-const DROP_MS = 680;
-const REVEAL_MS = 520; // once the ball has landed: content fades in, the pill fades out
-const BUTTON_RADIUS = 16; // matches the button's rounded-2xl
-
-type Rect = { x: number; y: number; width: number; height: number };
 
 const SEGMENTS = [
   {
@@ -74,20 +51,8 @@ export default function WelcomeScreen({ navigation }: Props) {
   const isFocused = useIsFocused();
   const splashDone = useSplashDone();
   const [time, setTime] = useState(0);
-  // Caption block geometry: its height sizes the scrim, its offset places the morph target.
-  const [panel, setPanel] = useState({ x: 0, y: 0, height: 0 });
-  const [button, setButton] = useState<Rect | null>(null);
-  const [landed, setLanded] = useState(false); // ball has reached the button
-  const [morphDone, setMorphDone] = useState(false); // pill has faded into the real button
-  const panelHeight = panel.height;
-  // Everything but the ball stays hidden until it has landed; the reel starts as it fades in.
-  const active = isFocused && splashDone && landed;
-
-  const reveal = useSharedValue(0);
-  useEffect(() => {
-    if (landed) reveal.value = withTiming(1, { duration: REVEAL_MS });
-  }, [landed]);
-  const revealStyle = useAnimatedStyle(() => ({ opacity: reveal.value }));
+  const [panelHeight, setPanelHeight] = useState(0); // caption block height sizes the scrim
+  const active = isFocused && splashDone;
   const startedOnce = useRef(false);
 
   const player = useVideoPlayer(REEL, (p) => {
@@ -125,8 +90,6 @@ export default function WelcomeScreen({ navigation }: Props) {
     <View className="flex-1 bg-linen">
       <StatusBar style={isFocused ? "light" : "dark"} />
 
-      {/* The whole screen fades in together once the ball has landed on the button. */}
-      <Animated.View style={[StyleSheet.absoluteFill, revealStyle]}>
       {/* Edge to edge on any screen shape: the view is exactly the screen and the player's
           own aspect-fill crops the reel to it (sides on tall phones, top/bottom on wide). */}
       <VideoView
@@ -196,17 +159,14 @@ export default function WelcomeScreen({ navigation }: Props) {
       <View
         style={{ paddingBottom: insets.bottom + 16 }}
         className="px-6"
-        onLayout={(e) => {
-          const { x, y, height } = e.nativeEvent.layout;
-          setPanel({ x, y, height });
-        }}
+        onLayout={(e) => setPanelHeight(e.nativeEvent.layout.height)}
       >
         {/* marginBottom as a style, not a class: NativeWind doesn't map className onto
             reanimated's Animated.View, so a mb-* class here is silently dropped. */}
         <Animated.View
           key={segment}
           entering={FadeInDown.duration(450)}
-          style={{ marginBottom: 56 }}
+          style={{ marginBottom: 32 }}
         >
           <Text className="text-amber text-xs font-bold tracking-[2px] uppercase mb-2">
             {copy.label}
@@ -220,7 +180,6 @@ export default function WelcomeScreen({ navigation }: Props) {
         {/* One way in: the sign-up screen carries its own "Already have an account?" switch. */}
         <Pressable
           onPress={() => navigation.navigate("Auth", { mode: "signup" })}
-          onLayout={(e) => setButton(e.nativeEvent.layout)}
           className="bg-linen rounded-2xl py-4 items-center active:opacity-80"
         >
           <Text className="text-navy text-base font-bold">Get started</Text>
@@ -230,81 +189,6 @@ export default function WelcomeScreen({ navigation }: Props) {
           For businesses and influencers
         </Text>
       </View>
-      </Animated.View>
-
-      {/* Continues the splash: its navy fill shrinks into the ball, drops onto the button,
-          then cross-fades into it while the rest of the screen fades in. */}
-      {splashDone && button && !morphDone ? (
-        <SplashMorph
-          target={{
-            x: panel.x + button.x,
-            y: panel.y + button.y,
-            width: button.width,
-            height: button.height,
-          }}
-          onLanded={() => setLanded(true)}
-          onDone={() => setMorphDone(true)}
-        />
-      ) : null}
     </View>
   );
-}
-
-// Starts as the full-screen navy the splash left behind. Progress 0→1 pulls it back into
-// the splash's ball at the centre of the screen; 1→2 drops the ball onto the "Get started"
-// button, stretching it to the button's shape and turning it linen. On landing it reports
-// `onLanded`, then fades out over the real button (which is fading in underneath) and
-// reports `onDone`.
-function SplashMorph({
-  target,
-  onLanded,
-  onDone,
-}: {
-  target: Rect;
-  onLanded: () => void;
-  onDone: () => void;
-}) {
-  const { width, height } = useWindowDimensions();
-  const progress = useSharedValue(0);
-  const fade = useSharedValue(1);
-
-  useEffect(() => {
-    const land = () => {
-      onLanded();
-      fade.value = withTiming(0, { duration: REVEAL_MS }, (finished) => {
-        if (finished) runOnJS(onDone)();
-      });
-    };
-    progress.value = withDelay(
-      MORPH_DELAY,
-      withSequence(
-        withTiming(1, { duration: CONTRACT_MS, easing: Easing.inOut(Easing.cubic) }),
-        withDelay(
-          BALL_HOLD_MS,
-          withTiming(2, { duration: DROP_MS, easing: Easing.inOut(Easing.cubic) }, (finished) => {
-            if (finished) runOnJS(land)();
-          })
-        )
-      )
-    );
-  }, []);
-
-  const ballLeft = (width - BALL) / 2;
-  const ballTop = (height - BALL) / 2;
-
-  const style = useAnimatedStyle(() => {
-    const p = progress.value;
-    return {
-      left: interpolate(p, [0, 1, 2], [0, ballLeft, target.x]),
-      top: interpolate(p, [0, 1, 2], [0, ballTop, target.y]),
-      width: interpolate(p, [0, 1, 2], [width, BALL, target.width]),
-      height: interpolate(p, [0, 1, 2], [height, BALL, target.height]),
-      borderRadius: interpolate(p, [0, 1, 2], [0, BALL / 2, BUTTON_RADIUS]),
-      // Stays navy through the ball; only turns linen on the way into the button.
-      backgroundColor: interpolateColor(p, [1, 2], [colors.navy, colors.linen]),
-      opacity: fade.value,
-    };
-  });
-
-  return <Animated.View pointerEvents="none" style={[{ position: "absolute" }, style]} />;
 }

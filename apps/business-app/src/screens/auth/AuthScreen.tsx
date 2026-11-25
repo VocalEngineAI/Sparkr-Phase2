@@ -1,21 +1,13 @@
 import React, { useState } from "react";
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  TextInputProps,
-  View,
-} from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInputProps, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { colors } from "@sparkr/ui";
 import { useAuth } from "../../context/AuthContext";
 import type { AuthRole, AuthStackParamList } from "../../navigation/AuthNavigator";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
 
 // Sign up / log in for both account types. Frontend-only for now: submitting validates
 // the form and signs in with the chosen role via AuthContext — no backend call yet.
@@ -64,13 +56,15 @@ export default function AuthScreen({ navigation, route }: Props) {
         keyboardShouldPersistTaps="handled"
       >
         <View className="px-6">
-          <Pressable
+          <Button
+            variant="outline"
+            size="icon"
             onPress={() => navigation.goBack()}
             hitSlop={12}
-            className="w-10 h-10 rounded-full bg-surface border border-border items-center justify-center mb-6"
+            className="w-10 h-10 rounded-full mb-6"
           >
             <Text className="text-navy text-lg">←</Text>
-          </Pressable>
+          </Button>
 
           <Text className="text-3xl font-extrabold text-text mb-2">
             {isSignup ? "Create your account" : "Welcome back"}
@@ -148,14 +142,9 @@ export default function AuthScreen({ navigation, route }: Props) {
 
           {error ? <Text className="text-sm text-warning mb-4">{error}</Text> : null}
 
-          <Pressable
-            onPress={submit}
-            className="bg-navy rounded-2xl py-4 items-center mt-2 active:opacity-80"
-          >
-            <Text className="text-linen text-base font-bold">
-              {isSignup ? "Create account" : "Log in"}
-            </Text>
-          </Pressable>
+          <Button onPress={submit} size="lg" className="mt-2">
+            <Text className="text-background text-base font-bold">{isSignup ? "Create account" : "Log in"}</Text>
+          </Button>
 
           {isSignup ? (
             <Text className="text-xs text-textMuted text-center mt-4 leading-5">
@@ -182,12 +171,8 @@ export default function AuthScreen({ navigation, route }: Props) {
 function Field({ label, ...input }: TextInputProps & { label: string }) {
   return (
     <View className="mb-5">
-      <Text className="text-sm font-semibold text-text mb-2">{label}</Text>
-      <TextInput
-        {...input}
-        placeholderTextColor={colors.textMuted}
-        className="bg-surface border border-border rounded-xl px-4 py-3.5 text-base text-text"
-      />
+      <Label className="mb-2">{label}</Label>
+      <Input {...input} className="h-auto rounded-xl px-4 py-3.5" />
     </View>
   );
 }
