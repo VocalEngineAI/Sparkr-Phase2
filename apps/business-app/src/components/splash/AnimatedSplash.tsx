@@ -10,7 +10,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
-import { colors } from "@sparkr/ui";
 import FlipLetters from "./FlipLetters";
 
 /*
@@ -25,6 +24,9 @@ import FlipLetters from "./FlipLetters";
  */
 
 const BALL = 72; // diameter, px
+// The splash keeps its own electric blue rather than the app's `primary` token, so it
+// reads the same regardless of the brand palette.
+const SPLASH_BLUE = "#091EDB";
 
 const TIMING = {
   hold: 250, // plain white, exactly like the native splash
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
     width: BALL,
     height: BALL,
     borderRadius: BALL / 2,
-    backgroundColor: colors.primary,
+    backgroundColor: SPLASH_BLUE,
   },
   title: {
     color: "#FFFFFF",
