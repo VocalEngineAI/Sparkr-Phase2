@@ -17,6 +17,12 @@ const navTheme: Theme = {
     text: colors.text,
     border: colors.border,
   },
+  fonts: {
+    regular: { fontFamily: "DMSans_400Regular", fontWeight: "normal" },
+    medium: { fontFamily: "DMSans_500Medium", fontWeight: "normal" },
+    bold: { fontFamily: "DMSans_700Bold", fontWeight: "normal" },
+    heavy: { fontFamily: "DMSans_700Bold", fontWeight: "normal" },
+  },
 };
 
 export default function RootNavigator() {

@@ -2,6 +2,14 @@ import "./global.css";
 import React, { useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
+import {
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold,
+  DMSans_800ExtraBold,
+  useFonts,
+} from "@expo-google-fonts/dm-sans";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "./src/context/AuthContext";
 import RootNavigator from "./src/navigation/RootNavigator";
@@ -14,11 +22,20 @@ SplashScreen.setOptions({ duration: 0, fade: false });
 
 export default function App() {
   const [splashDone, setSplashDone] = useState(false);
+  const [fontsLoaded] = useFonts({
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
+    DMSans_800ExtraBold,
+  });
 
+  // The splash has no text, so it shows from the first frame; only the app screens wait
+  // for the fonts (hidden behind the splash), so nothing ever renders in the system font.
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <RootNavigator />
+        {fontsLoaded ? <RootNavigator /> : null}
         {splashDone ? null : <AnimatedSplash onFinish={() => setSplashDone(true)} />}
         <StatusBar style="dark" />
       </AuthProvider>

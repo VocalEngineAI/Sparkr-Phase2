@@ -1,6 +1,6 @@
 export declare const colors: {
-  darkBlue: string;
-  lavender: string;
+  indigo: string;
+  electric: string;
   coral: string;
   primary: string;
   primaryLight: string;

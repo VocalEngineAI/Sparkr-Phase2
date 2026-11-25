@@ -25,12 +25,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF",
+          "backgroundColor": "#EEF0FB",
           "image": "./assets/splash-s.png",
-          "imageWidth": 64,
+          "imageWidth": 90,
           "resizeMode": "contain"
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }
