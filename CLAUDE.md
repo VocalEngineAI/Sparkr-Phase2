@@ -1,6 +1,7 @@
 # Sparkr Phase 2
 
-Mobile ecosystem for Sparkr (restaurants, nail salons, spas): a Business & Influencer
+Mobile ecosystem for Sparkr (any type of local business — restaurants, nail salons,
+and spas today, with the platform built to support more): a Business & Influencer
 app, a Customer app, and a web Admin panel, sharing one backend. Client: Kenny Moy,
 Sparkr. Built by VocalEngineAI.
 

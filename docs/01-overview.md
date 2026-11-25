@@ -10,7 +10,7 @@ New York City, made of four products sharing one backend:
 | App | Platform | Users |
 | --- | --- | --- |
 | **Business & Influencer App** | iOS + Android, one download, separate logins | Business owners/staff AND influencers |
-| **Customer App** | iOS + Android, separate download | End customers (diners, salon/spa clients) |
+| **Customer App** | iOS + Android, separate download | End customers of Sparkr businesses |
 | **Admin Panel** | Web app | Sparkr's internal team |
 
 All three connect to the existing One-Tab landing pages and share one backend so
@@ -35,7 +35,8 @@ campaigns, coins, deals, and messages stay in sync in real time.
 
 ## The solution
 
-One mobile ecosystem for restaurants, nail salons and spas:
+One mobile ecosystem for Sparkr businesses of any type — restaurants, nail salons,
+and spas today, with no restriction baked in against other business types joining:
 - A **business app** to run influencer campaigns, manage Google/social, message
   customers, sell vouchers/gift cards/tickets, and run a rewards/membership program
 - A **customer app** to discover deals, join memberships, redeem rewards, book
