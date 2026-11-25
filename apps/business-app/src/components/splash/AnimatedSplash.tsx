@@ -34,9 +34,9 @@ import FloatingCards from "./FloatingCards";
  */
 
 // Must match app.json → expo-splash-screen → imageWidth, so the hand-off is invisible.
-// assets/splash-s.png is 374x386.
+// assets/splash-s.png (cropped from photos/Slogo.png) is 480x437.
 export const S_LOGO_WIDTH = 120;
-const S_LOGO_HEIGHT = Math.round((S_LOGO_WIDTH * 386) / 374);
+const S_LOGO_HEIGHT = Math.round((S_LOGO_WIDTH * 437) / 480);
 
 const TIMING = {
   hold: 300, // S sits still, exactly like the native splash
@@ -229,7 +229,9 @@ function TypedText({
     <View>
       <Text style={[style, styles.invisible]}>{full}</Text>
       <View style={styles.typedOverlay}>
-        <Text style={style}>{full.slice(0, count)}</Text>
+        <Text style={style} numberOfLines={1}>
+          {full.slice(0, count)}
+        </Text>
         {cursor}
       </View>
     </View>
@@ -279,8 +281,15 @@ const styles = StyleSheet.create({
   },
   rule: { flex: 1, height: 1.5, backgroundColor: colors.amber, marginHorizontal: 6 },
   invisible: { opacity: 0 },
+  // The overlay extends 40pt past the reserved word width. Yoga measures an absolute
+  // child's text against its container's width, so without this slack the trailing
+  // cursor squeezes the word and its last letters get cut off.
   typedOverlay: {
-    ...StyleSheet.absoluteFill,
+    position: "absolute",
+    left: 0,
+    right: -40,
+    top: 0,
+    bottom: 0,
     flexDirection: "row",
     alignItems: "center",
   },
