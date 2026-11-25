@@ -13,7 +13,7 @@ const CODE_LENGTH = 4;
 const RESEND_SECONDS = 30;
 
 export default function VerifyEmailScreen({ navigation, route }: Props) {
-  const { role, email } = route.params;
+  const { role, email, purpose = "signup" } = route.params;
   const [code, setCode] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
 
@@ -29,15 +29,18 @@ export default function VerifyEmailScreen({ navigation, route }: Props) {
     setSecondsLeft(RESEND_SECONDS);
   };
 
-  // Frontend-only: any complete code is accepted until the backend exists.
+  // Frontend-only: any complete code is accepted until the backend exists. Signing up
+  // continues to the profile; a password reset continues to the new-password screen.
   const submit = () => {
-    if (code.length === CODE_LENGTH) navigation.navigate("FillProfile", { role, email });
+    if (code.length < CODE_LENGTH) return;
+    if (purpose === "reset") navigation.navigate("ResetPassword", { role, email });
+    else navigation.navigate("FillProfile", { role, email });
   };
 
   return (
     <AuthShell
       onBack={() => navigation.goBack()}
-      title="Verify your email"
+      title={purpose === "reset" ? "Check your email" : "Verify your email"}
       footer={
         <>
           <PrimaryButton label="Continue" onPress={submit} disabled={code.length < CODE_LENGTH} />

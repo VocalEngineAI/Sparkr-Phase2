@@ -5,6 +5,7 @@ import type { AuthStackParamList } from "../../navigation/AuthNavigator";
 import { useAuth } from "../../context/AuthContext";
 import AuthShell from "../../components/auth/AuthShell";
 import PrimaryButton from "../../components/auth/PrimaryButton";
+import CongratsModal from "../../components/auth/CongratsModal";
 import { applyKey, CodeBoxes, NumberPad } from "../../components/auth/CodeEntry";
 import { Text } from "../../components/ui/text";
 
@@ -15,13 +16,17 @@ const PIN_LENGTH = 4;
 export default function CreatePinScreen({ navigation, route }: Props) {
   const { signInAs } = useAuth();
   const [pin, setPin] = useState("");
+  const [done, setDone] = useState(false);
 
-  // Frontend-only: the PIN isn't stored anywhere yet; completing it signs the user in.
+  // Frontend-only: the PIN isn't stored anywhere yet. Completing it shows the
+  // congratulations card, which signs the user in after a moment.
   const submit = () => {
-    if (pin.length === PIN_LENGTH) signInAs(route.params.role);
+    if (pin.length === PIN_LENGTH) setDone(true);
   };
 
   return (
+    <>
+    <CongratsModal visible={done} onDone={() => signInAs(route.params.role)} />
     <AuthShell
       onBack={() => navigation.goBack()}
       title="Create New PIN"
@@ -39,5 +44,6 @@ export default function CreatePinScreen({ navigation, route }: Props) {
       </Text>
       <CodeBoxes length={PIN_LENGTH} value={pin} masked />
     </AuthShell>
+    </>
   );
 }

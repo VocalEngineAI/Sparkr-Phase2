@@ -41,7 +41,7 @@ const TIMING = {
   logoIn: 450,
   lettersIn: 900, // base per letter; each letter spins a bit faster or slower
   letterScatter: 1100, // window the letters' start times are scattered over
-  holdEnd: 1500,
+  holdEnd: 1000, // finished wordmark stays still before the fade into the welcome screen
   fadeOut: 500,
 };
 

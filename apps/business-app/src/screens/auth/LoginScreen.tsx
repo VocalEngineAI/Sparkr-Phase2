@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "../../navigation/AuthNavigator";
 import { useAuth } from "../../context/AuthContext";
@@ -78,7 +78,7 @@ export default function LoginScreen({ navigation, route }: Props) {
       <PrimaryButton label="Sign in" onPress={submit} className="mt-5" />
 
       <Pressable
-        onPress={() => Alert.alert("Reset password", "Password reset isn't available yet.")}
+        onPress={() => navigation.navigate("ForgotPassword", { role })}
         hitSlop={8}
         className="self-center mt-5"
       >
