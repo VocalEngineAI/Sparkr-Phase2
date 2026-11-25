@@ -1,8 +1,9 @@
 import React from "react";
 import { DefaultTheme, NavigationContainer, Theme } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
 import { colors } from "@sparkr/ui";
 import { useAuth } from "../context/AuthContext";
-import RoleSelectScreen from "../screens/auth/RoleSelectScreen";
+import AuthNavigator from "./AuthNavigator";
 import BusinessTabNavigator from "./BusinessTabNavigator";
 import InfluencerTabNavigator from "./InfluencerTabNavigator";
 
@@ -17,26 +18,25 @@ const navTheme: Theme = {
     text: colors.text,
     border: colors.border,
   },
-  fonts: {
-    regular: { fontFamily: "DMSans_400Regular", fontWeight: "normal" },
-    medium: { fontFamily: "DMSans_500Medium", fontWeight: "normal" },
-    bold: { fontFamily: "DMSans_700Bold", fontWeight: "normal" },
-    heavy: { fontFamily: "DMSans_700Bold", fontWeight: "normal" },
-  },
 };
 
 export default function RootNavigator() {
   const { role } = useAuth();
 
   return (
-    <NavigationContainer theme={navTheme}>
-      {role === "business" ? (
-        <BusinessTabNavigator />
-      ) : role === "influencer" ? (
-        <InfluencerTabNavigator />
-      ) : (
-        <RoleSelectScreen />
-      )}
-    </NavigationContainer>
+    <>
+      {/* Base status bar style. Screens that need another (the welcome video, the splash)
+          mount their own <StatusBar>, which takes precedence while mounted. */}
+      <StatusBar style="dark" />
+      <NavigationContainer theme={navTheme}>
+        {role === "business" ? (
+          <BusinessTabNavigator />
+        ) : role === "influencer" ? (
+          <InfluencerTabNavigator />
+        ) : (
+          <AuthNavigator />
+        )}
+      </NavigationContainer>
+    </>
   );
 }

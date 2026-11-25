@@ -1,6 +1,5 @@
 import React from "react";
-import { ScrollView, View } from "react-native";
-import { Text } from "../../components/ui/Text";
+import { ScrollView, Text, View } from "react-native";
 
 // Mocked data — replace with real queries once the backend exists.
 const mockBalance = 128.0;

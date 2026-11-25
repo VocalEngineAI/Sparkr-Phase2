@@ -1,7 +1,7 @@
 export declare const colors: {
-  indigo: string;
-  electric: string;
-  coral: string;
+  linen: string;
+  navy: string;
+  amber: string;
   primary: string;
   primaryLight: string;
   accent: string;

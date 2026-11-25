@@ -4,8 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # Sparkr Phase 2
 
-Mobile ecosystem for Sparkr (any type of local business — restaurants, nail salons,
-and spas today, with the platform built to support more): a Business & Influencer
+Mobile ecosystem for Sparkr (restaurants, nail salons, spas): a Business & Influencer
 app, a Customer app, and a web Admin panel, sharing one backend. Client: Kenny Moy,
 Sparkr. Built by VocalEngineAI.
 
@@ -62,7 +61,10 @@ first run — only do that if asked.
 
 - **One binary, two roles.** `src/context/AuthContext.tsx` holds a mock `role`
   (`business` | `influencer` | null). `src/navigation/RootNavigator.tsx` switches on it:
-  null → `RoleSelectScreen`, otherwise `BusinessTabNavigator` or `InfluencerTabNavigator`.
+  null → `AuthNavigator` (welcome video reel → sign up / log in), otherwise
+  `BusinessTabNavigator` or `InfluencerTabNavigator`. Auth is mocked: submitting the form just
+  calls `signInAs(role)`. The animated splash overlays everything on launch; `useSplashDone()`
+  tells screens underneath when it has gone.
   Screens live under `src/screens/{auth,business,influencer}/`.
 - **Navigation is React Navigation (bottom tabs), not Expo Router.** `apps/business-app/AGENTS.md`
   is the stock Expo template and says to use Expo Router in `src/app/` — ignore that part;

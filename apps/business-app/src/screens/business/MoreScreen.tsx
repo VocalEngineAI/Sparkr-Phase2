@@ -1,6 +1,5 @@
 import React from "react";
-import { Pressable, ScrollView, View } from "react-native";
-import { Text } from "../../components/ui/Text";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 
 const items = [

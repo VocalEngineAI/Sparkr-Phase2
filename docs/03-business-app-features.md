@@ -6,7 +6,7 @@ what it does, how it works, and what's explicitly **not included**.
 ## Feature 1 — Influencer Campaigns
 
 **Paid or Barter**
-- Barter: business enters only the product/service credit offered. No Sparkr fee.
+- Barter: business enters only the dining/promo credit offered. No Sparkr fee.
 - Paid: business enters the credit + payment per influencer. Sparkr takes a platform fee.
 
 **Setup**
@@ -236,7 +236,7 @@ track redemptions and promotion revenue.
 
 **Deposit display**
 - Every reservation shows its deposit next to party size/notes/special requests
-- Clear warning: **the business is responsible for managing each deposit against the final bill** — Sparkr does not apply, refund, or reconcile deposits
+- Clear warning: **the restaurant is responsible for managing each deposit against the final bill** — Sparkr does not apply, refund, or reconcile deposits
 - Same warning shown at setup, before the first booking
 - Per-business setting; businesses without it keep the standard view
 

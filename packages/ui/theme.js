@@ -4,28 +4,30 @@
 // apps render the same brand colors. admin-web (Next.js) keeps its own Tailwind config.
 
 // Sparkr brand palette.
-//   indigo   — very light indigo, the base: every screen background
-//   electric — the main blue: filled buttons, active tabs, headline text
-//   coral    — warm accent for CTAs/highlights; too light for body text
+//   linen — the base: every screen background
+//   navy  — text, filled buttons, the logo S
+//   amber — hints only (sparkle, small highlights); too light for text on linen
 const brand = {
-  indigo: "#EEF0FB",
-  electric: "#091EDB",
-  coral: "#FF7A7A",
+  linen: "#F1ECE3",
+  navy: "#14213D",
+  amber: "#FFB020",
 };
 
 const colors = {
   ...brand,
   // Semantic tokens used by screens (className="bg-primary", "text-textMuted", …).
-  primary: brand.electric,
-  primaryLight: "#A9B4F2", // lighter electric, for secondary text on blue cards
-  accent: brand.coral,
+  // `primary` is the colour of filled buttons/cards and active tabs, so it's navy —
+  // linen is the base via `background`.
+  primary: brand.navy,
+  primaryLight: "#D9D2C5", // muted linen, for secondary text on navy cards
+  accent: brand.amber,
   success: "#2C5F2D",
   warning: "#B85042",
-  background: brand.indigo,
-  surface: "#FFFFFF", // white cards lift off the indigo background
-  text: "#101A4D", // deep navy-indigo for body text
-  textMuted: "#5A6484",
-  border: "#D3D8EE",
+  background: brand.linen,
+  surface: "#FAF7F1", // cards on the linen background
+  text: brand.navy,
+  textMuted: "#5C6477",
+  border: "#DDD5C7",
 };
 
 module.exports = { colors };
