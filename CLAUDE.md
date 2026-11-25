@@ -69,7 +69,9 @@ first run — only do that if asked.
 - **Unbuilt screens** render `src/components/PlaceholderScreen.tsx` with an `upcoming`
   list taken from `docs/10-frontend-phase-plan.md`; replace it when building the feature.
 - **Styling** is NativeWind `className` using the token names from `packages/ui/theme.js`
-  (`bg-primary`, `text-textMuted`, `bg-surface`, …). For non-className props (e.g. tab
+  (`bg-primary`, `text-textMuted`, `bg-surface`, …). Brand palette: linen `#F1ECE3` is the
+  base/background, navy `#14213D` is ink, buttons and the logo (`primary`), amber `#FFB020` is
+  hints only (`accent`; too light for text on linen). For non-className props (e.g. tab
   tint colors) import `colors` from `@sparkr/ui`. `theme.js` is plain JS on purpose so
   `tailwind.config.js` can `require()` it — keep it JS and update `theme.d.ts` alongside.
 - **Monorepo wiring:** `metro.config.js` adds the repo root to `watchFolders`/`nodeModulesPaths`

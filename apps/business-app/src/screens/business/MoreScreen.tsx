@@ -27,7 +27,7 @@ export default function MoreScreen() {
           onPress={signOut}
           className="mt-6 border border-border rounded-xl py-4 items-center active:opacity-80"
         >
-          <Text className="text-accent font-semibold">Switch role / Sign out</Text>
+          <Text className="text-warning font-semibold">Switch role / Sign out</Text>
         </Pressable>
       </View>
     </ScrollView>

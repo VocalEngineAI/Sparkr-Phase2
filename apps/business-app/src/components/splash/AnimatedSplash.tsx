@@ -19,11 +19,12 @@ import Animated, {
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import * as SplashScreen from "expo-splash-screen";
+import { colors } from "@sparkr/ui";
 import FloatingCards from "./FloatingCards";
 
 /*
  * In-app half of the splash. The native splash (app.json → expo-splash-screen) shows the
- * Sparkr S centred on black; this component draws the same S at the same size and spot,
+ * navy Sparkr S centred on linen; this component draws the same S at the same size and spot,
  * hides the native one, then plays:
  *
  *   S pulses → slides left → a cursor types "SPARKR" letter by letter beside it →
@@ -45,7 +46,7 @@ const TIMING = {
   charMs: 95,
   pauseBeforeMedia: 180,
   rules: 300,
-  holdEnd: 1400,
+  holdEnd: 3000, // finished logo + photo cards stay on screen before fading into the app
   fadeOut: 450,
 };
 
@@ -235,15 +236,16 @@ function TypedText({
   );
 }
 
-// Soft pink→violet→blue haze trailing the cursor. Stacked translucent ovals stand in for
-// a blur, which React Native can't do without another native module.
+// Soft amber haze trailing the cursor — one of the palette's amber hints. Stacked
+// translucent ovals stand in for a blur, which React Native can't do without another
+// native module.
 function Glow() {
   return (
     <>
       {[1, 0.75, 0.5].map((scale) => (
         <LinearGradient
           key={scale}
-          colors={["rgba(96,165,250,0.24)", "rgba(139,92,246,0.18)", "rgba(59,130,246,0)"]}
+          colors={["rgba(255,176,32,0.22)", "rgba(255,176,32,0.12)", "rgba(255,176,32,0)"]}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={[styles.glowLayer, { transform: [{ scaleX: scale }, { scaleY: scale }] }]}
@@ -257,27 +259,25 @@ const GLOW_W = 130;
 const GLOW_H = 80;
 
 const styles = StyleSheet.create({
-  root: { backgroundColor: "#000000", zIndex: 100 },
+  root: { backgroundColor: colors.linen, zIndex: 100 },
   center: { alignItems: "center", justifyContent: "center" },
   lockup: { flexDirection: "row", alignItems: "center" },
   wordmark: { marginLeft: 8 },
   title: {
-    color: "#E8F0FF",
+    color: colors.navy,
     fontSize: 34,
     fontWeight: "800",
     letterSpacing: 1.5,
-    textShadowColor: "rgba(59,130,246,0.55)",
-    textShadowRadius: 12,
   },
   subtitleRow: { flexDirection: "row", alignItems: "center", marginTop: 2 },
   subtitle: {
-    color: "#9FB8EE",
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "500",
     letterSpacing: 6,
     marginLeft: 6, // balances the trailing letterSpacing so MEDIA sits centred
   },
-  rule: { flex: 1, height: 1, backgroundColor: "#3B6FD8", marginHorizontal: 6 },
+  rule: { flex: 1, height: 1.5, backgroundColor: colors.amber, marginHorizontal: 6 },
   invisible: { opacity: 0 },
   typedOverlay: {
     ...StyleSheet.absoluteFill,
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cursorSlot: { width: 3, marginLeft: 2 },
-  cursor: { width: 3, borderRadius: 1.5, backgroundColor: "#DCE8FF" },
+  cursor: { width: 3, borderRadius: 1.5, backgroundColor: colors.navy },
   glow: { position: "absolute", left: -20, width: GLOW_W, height: GLOW_H },
   glowLayer: { ...StyleSheet.absoluteFill, borderRadius: GLOW_H / 2 },
 });

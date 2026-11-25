@@ -20,7 +20,7 @@ export default function App() {
       <AuthProvider>
         <RootNavigator />
         {splashDone ? null : <AnimatedSplash onFinish={() => setSplashDone(true)} />}
-        <StatusBar style={splashDone ? "auto" : "light"} />
+        <StatusBar style="dark" />
       </AuthProvider>
     </SafeAreaProvider>
   );
