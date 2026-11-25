@@ -3,31 +3,29 @@
 // without a TS loader. Imported into each app's tailwind.config.js `theme.extend` so both
 // apps render the same brand colors. admin-web (Next.js) keeps its own Tailwind config.
 
-// Sparkr brand palette.
-//   linen — the base: every screen background
-//   navy  — text, filled buttons, the logo S
-//   amber — hints only (sparkle, small highlights); too light for text on linen
+// Sparkr brand palette (trial scheme).
+//   darkBlue — filled buttons, active tabs, headline text
+//   lavender — secondary/lighter surfaces, muted tints of darkBlue
+//   coral    — warm accent for CTAs/highlights; too light for body text
 const brand = {
-  linen: "#F1ECE3",
-  navy: "#14213D",
-  amber: "#FFB020",
+  darkBlue: "#091EDB",
+  lavender: "#91A3E5",
+  coral: "#FF7A7A",
 };
 
 const colors = {
   ...brand,
   // Semantic tokens used by screens (className="bg-primary", "text-textMuted", …).
-  // `primary` is the colour of filled buttons/cards and active tabs, so it's navy —
-  // linen is the base via `background`.
-  primary: brand.navy,
-  primaryLight: "#D9D2C5", // muted linen, for secondary text on navy cards
-  accent: brand.amber,
+  primary: brand.darkBlue,
+  primaryLight: brand.lavender,
+  accent: brand.coral,
   success: "#2C5F2D",
   warning: "#B85042",
-  background: brand.linen,
-  surface: "#FAF7F1", // cards on the linen background
-  text: brand.navy,
-  textMuted: "#5C6477",
-  border: "#DDD5C7",
+  background: "#FFFFFF",
+  surface: "#F4F6FD", // faint lavender tint for cards on the white background
+  text: brand.darkBlue,
+  textMuted: "#5B6B9E", // muted blend of darkBlue/lavender
+  border: "#D7DEF5",
 };
 
 module.exports = { colors };

@@ -24,7 +24,7 @@ import FloatingCards from "./FloatingCards";
 
 /*
  * In-app half of the splash. The native splash (app.json → expo-splash-screen) shows the
- * navy Sparkr S centred on linen; this component draws the same S at the same size and spot,
+ * dark blue Sparkr S centred on white; this component draws the same S at the same size and spot,
  * hides the native one, then plays:
  *
  *   S pulses → slides left → a cursor types "SPARKR" letter by letter beside it →
@@ -35,7 +35,7 @@ import FloatingCards from "./FloatingCards";
 
 // Must match app.json → expo-splash-screen → imageWidth, so the hand-off is invisible.
 // assets/splash-s.png (cropped from photos/Slogo.png) is 480x437.
-export const S_LOGO_WIDTH = 120;
+export const S_LOGO_WIDTH = 76;
 const S_LOGO_HEIGHT = Math.round((S_LOGO_WIDTH * 437) / 480);
 
 const TIMING = {
@@ -46,7 +46,7 @@ const TIMING = {
   charMs: 95,
   pauseBeforeMedia: 180,
   rules: 300,
-  holdEnd: 3000, // finished logo + photo cards stay on screen before fading into the app
+  holdEnd: 4200, // finished logo + photo cards stay on screen before fading into the app
   fadeOut: 450,
 };
 
@@ -135,7 +135,6 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
 
       rules.value = withTiming(1, { duration: TIMING.rules, easing: Easing.out(Easing.cubic) });
       setCursorLine("subtitle");
-      setCardsActive(true);
       for (let i = 1; i <= SUBTITLE.length; i++) {
         if (!alive()) return;
         setSubtitleCount(i);
@@ -143,6 +142,8 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
       }
       glow.value = withTiming(0, { duration: 400 });
       cursorOpacity.value = withTiming(0, { duration: 300 });
+      // Photos only start their zoom-out once "SPARKR MEDIA" is fully typed.
+      setCardsActive(true);
       await wait(TIMING.holdEnd);
       if (alive()) finish();
     })();
@@ -238,7 +239,7 @@ function TypedText({
   );
 }
 
-// Soft amber haze trailing the cursor — one of the palette's amber hints. Stacked
+// Soft coral haze trailing the cursor — one of the palette's warm accents. Stacked
 // translucent ovals stand in for a blur, which React Native can't do without another
 // native module.
 function Glow() {
@@ -247,7 +248,7 @@ function Glow() {
       {[1, 0.75, 0.5].map((scale) => (
         <LinearGradient
           key={scale}
-          colors={["rgba(255,176,32,0.22)", "rgba(255,176,32,0.12)", "rgba(255,176,32,0)"]}
+          colors={["rgba(255,122,122,0.22)", "rgba(255,122,122,0.12)", "rgba(255,122,122,0)"]}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={[styles.glowLayer, { transform: [{ scaleX: scale }, { scaleY: scale }] }]}
@@ -261,25 +262,25 @@ const GLOW_W = 130;
 const GLOW_H = 80;
 
 const styles = StyleSheet.create({
-  root: { backgroundColor: colors.linen, zIndex: 100 },
+  root: { backgroundColor: colors.background, zIndex: 100 },
   center: { alignItems: "center", justifyContent: "center" },
   lockup: { flexDirection: "row", alignItems: "center" },
   wordmark: { marginLeft: 8 },
   title: {
-    color: colors.navy,
-    fontSize: 34,
+    color: colors.primary,
+    fontSize: 22,
     fontWeight: "800",
-    letterSpacing: 1.5,
+    letterSpacing: 0.95,
   },
   subtitleRow: { flexDirection: "row", alignItems: "center", marginTop: 2 },
   subtitle: {
     color: colors.textMuted,
-    fontSize: 12,
+    fontSize: 8,
     fontWeight: "500",
-    letterSpacing: 6,
+    letterSpacing: 3.8,
     marginLeft: 6, // balances the trailing letterSpacing so MEDIA sits centred
   },
-  rule: { flex: 1, height: 1.5, backgroundColor: colors.amber, marginHorizontal: 6 },
+  rule: { flex: 1, height: 1.5, backgroundColor: colors.accent, marginHorizontal: 6 },
   invisible: { opacity: 0 },
   // The overlay extends 40pt past the reserved word width. Yoga measures an absolute
   // child's text against its container's width, so without this slack the trailing
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cursorSlot: { width: 3, marginLeft: 2 },
-  cursor: { width: 3, borderRadius: 1.5, backgroundColor: colors.navy },
+  cursor: { width: 3, borderRadius: 1.5, backgroundColor: colors.primary },
   glow: { position: "absolute", left: -20, width: GLOW_W, height: GLOW_H },
   glowLayer: { ...StyleSheet.absoluteFill, borderRadius: GLOW_H / 2 },
 });
