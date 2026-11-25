@@ -1,5 +1,6 @@
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, View } from "react-native";
+import Text from "../../components/Text";
 
 // Mocked data — replace with real wallet/campaign queries once the backend exists.
 const mockWalletBalance = 482.5;

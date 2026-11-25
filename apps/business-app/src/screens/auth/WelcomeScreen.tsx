@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Image, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,6 +11,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { colors } from "@sparkr/ui";
 import type { AuthStackParamList } from "../../navigation/AuthNavigator";
 import { useSplashDone } from "../../context/SplashContext";
+import Text from "../../components/Text";
 
 // assets/welcome/welcome-reel.mp4 is the four source videos in videos/ cut to 4s each and
 // joined into one silent 16s 720p loop (~1.1 MB). One player for one file keeps

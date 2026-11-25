@@ -5,7 +5,7 @@ function Input({ className, ...props }: React.ComponentProps<typeof TextInput> &
   return (
     <TextInput
       className={cn(
-        "border-border bg-surface text-text flex h-12 w-full min-w-0 flex-row items-center rounded-xl border px-4 text-base leading-5 sm:h-9",
+        "border-border bg-surface text-text font-normal flex h-12 w-full min-w-0 flex-row items-center rounded-xl border px-4 text-base leading-5 sm:h-9",
         props.editable === false &&
           cn("opacity-50", Platform.select({ web: "disabled:pointer-events-none disabled:cursor-not-allowed" })),
         Platform.select({

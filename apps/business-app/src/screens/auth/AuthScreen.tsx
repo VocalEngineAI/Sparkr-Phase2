@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInputProps, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInputProps, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -8,6 +8,7 @@ import type { AuthRole, AuthStackParamList } from "../../navigation/AuthNavigato
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
+import Text from "../../components/Text";
 
 // Sign up / log in for both account types. Frontend-only for now: submitting validates
 // the form and signs in with the chosen role via AuthContext — no backend call yet.
