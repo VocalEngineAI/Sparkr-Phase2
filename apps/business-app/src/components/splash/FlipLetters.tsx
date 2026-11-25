@@ -8,28 +8,55 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-// A word whose letters flip in one after another around their horizontal axis — each
-// starts face-down (rotated 90° away from the viewer), invisible, and twists upright.
+// A word whose letters flip around their horizontal axis. The whole word is on screen
+// from the first frame — each letter starts a half turn over and spins upright, then
+// holds still. Every letter picks its own start time, speed and direction, so they flip
+// independently rather than sweeping across the word.
+const FLIP_FROM = 180; // degrees each letter travels
+const SLOWEST = 1.6; // a letter's spin lasts between MIN and SLOWEST x the base duration
+const FASTEST = 0.65;
+
+// How long after `delay` the last letter can still be spinning.
+export const LETTER_TAIL = SLOWEST;
+
+// Deterministic pseudo-random in [0,1), so a letter keeps the same spin across renders.
+function noise(seed: number) {
+  const n = Math.sin(seed * 12.9898) * 43758.5453;
+  return n - Math.floor(n);
+}
+
 type Props = {
   text: string;
   style: TextStyle;
-  stagger: number; // ms between letters
-  duration: number; // ms per letter
-  delay?: number; // ms before the first letter
+  duration: number; // base ms per letter; each letter varies around it
+  scatter: number; // ms window the letters' start times are spread over
+  delay?: number; // ms before the window opens
+  seed?: number; // separates words so they don't flip in the same pattern
 };
 
-export default function FlipLetters({ text, style, stagger, duration, delay = 0 }: Props) {
+export default function FlipLetters({
+  text,
+  style,
+  duration,
+  scatter,
+  delay = 0,
+  seed = 0,
+}: Props) {
   return (
     <View style={styles.row}>
-      {Array.from(text).map((char, i) => (
-        <FlipLetter
-          key={`${char}-${i}`}
-          char={char}
-          style={style}
-          delay={delay + i * stagger}
-          duration={duration}
-        />
-      ))}
+      {Array.from(text).map((char, i) => {
+        const at = seed + i;
+        return (
+          <FlipLetter
+            key={`${char}-${i}`}
+            char={char}
+            style={style}
+            delay={delay + noise(at * 7.31) * scatter}
+            duration={duration * (FASTEST + noise(at * 3.17 + 91.7) * (SLOWEST - FASTEST))}
+            direction={noise(at * 5.53 + 311.3) > 0.5 ? 1 : -1}
+          />
+        );
+      })}
     </View>
   );
 }
@@ -39,11 +66,13 @@ function FlipLetter({
   style,
   delay,
   duration,
+  direction,
 }: {
   char: string;
   style: TextStyle;
   delay: number;
   duration: number;
+  direction: number;
 }) {
   const progress = useSharedValue(0);
 
@@ -55,11 +84,9 @@ function FlipLetter({
   }, [delay, duration]);
 
   const animated = useAnimatedStyle(() => ({
-    opacity: progress.value,
     transform: [
       { perspective: 600 },
-      { rotateX: `${(1 - progress.value) * 90}deg` },
-      { translateY: (1 - progress.value) * 10 },
+      { rotateX: `${(1 - progress.value) * direction * FLIP_FROM}deg` },
     ],
   }));
 

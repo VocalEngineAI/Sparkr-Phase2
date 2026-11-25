@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, TextStyle, View, useWindowDimensions } from "react-native";
+import { Image, Pressable, StyleSheet, TextStyle, View, useWindowDimensions } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -10,23 +10,30 @@ import Animated, {
 } from "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
-import FlipLetters from "./FlipLetters";
+import { colors } from "@sparkr/ui";
+import FlipLetters, { LETTER_TAIL } from "./FlipLetters";
 
 /*
  * In-app half of the splash. The native splash (app.json → expo-splash-screen) is plain
- * white; this component takes over with the same white frame, then plays:
+ * linen; this component takes over with the same linen frame, then plays:
  *
- *   a blue ball drops in from the top → lands at the centre, squashes and bounces once →
- *   swells until it floods the whole screen blue → "SPARKR" and "MEDIA" flip in letter
- *   by letter around their horizontal axis → fade into the app.
+ *   a navy ball drops in from the top → lands at the centre, squashes and bounces once →
+ *   swells until it floods the whole screen navy → the S mark fades in and "SPARKR MEDIA"
+ *   flips letter by letter beneath it, around each letter's horizontal axis → the lockup
+ *   fades, leaving plain navy.
+ *
+ * The navy is handed over, not faded out: the welcome screen underneath starts with the
+ * same full-screen navy, pulls it back into the ball, then drops the ball into the
+ * "Get started" button — so the two screens read as one continuous animation.
  *
  * Tap anywhere to skip.
  */
 
-const BALL = 72; // diameter, px
-// The splash keeps its own electric blue rather than the app's `primary` token, so it
-// reads the same regardless of the brand palette.
-const SPLASH_BLUE = "#091EDB";
+export const BALL = 72; // diameter, px — the welcome screen rebuilds this ball from the fill
+
+// assets/splash-s.png is a navy silhouette, so it tints linen to read on the navy fill.
+const S_LOGO_WIDTH = 60;
+const S_LOGO_HEIGHT = Math.round((S_LOGO_WIDTH * 437) / 480);
 
 const TIMING = {
   hold: 250, // plain white, exactly like the native splash
@@ -35,9 +42,9 @@ const TIMING = {
   bounceDown: 300,
   settle: 120,
   fill: 750,
-  lettersIn: 520, // per letter
-  letterStagger: 55,
-  wordGap: 180, // extra pause before "MEDIA" starts
+  logoIn: 450,
+  lettersIn: 900, // base per letter; each letter spins a bit faster or slower
+  letterScatter: 1100, // window the letters' start times are scattered over
   holdEnd: 1500,
   fadeOut: 500,
 };
@@ -49,22 +56,23 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
   const { width: W, height: H } = useWindowDimensions();
   const [ready, setReady] = useState(false);
   const [filled, setFilled] = useState(false);
-  const [lettersStart, setLettersStart] = useState<number | null>(null);
+  const [showLockup, setShowLockup] = useState(false);
   const finished = useRef(false);
 
   const ballY = useSharedValue(-(H / 2 + BALL)); // starts just above the top edge
   const ballScaleX = useSharedValue(1);
   const ballScaleY = useSharedValue(1);
   const ballGrow = useSharedValue(1); // 1 = ball, FILL_SCALE = covers the screen
-  const screenOpacity = useSharedValue(1);
+  const lockupOpacity = useSharedValue(1);
 
   // Scale that takes the ball's circle past every screen corner.
   const fillScale = (Math.hypot(W, H) / BALL) * 1.05;
 
+  // Only the lockup fades; the navy stays put for the welcome screen to pick up.
   const finish = useCallback(() => {
     if (finished.current) return;
     finished.current = true;
-    screenOpacity.value = withTiming(0, { duration: TIMING.fadeOut });
+    lockupOpacity.value = withTiming(0, { duration: TIMING.fadeOut });
     setTimeout(onFinish, TIMING.fadeOut);
   }, [onFinish]);
 
@@ -125,11 +133,8 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
       await wait(TIMING.fill * 0.45);
       if (!alive()) return;
 
-      setLettersStart(Date.now());
-      const lettersTotal =
-        (TITLE.length + SUBTITLE.length - 1) * TIMING.letterStagger +
-        TIMING.wordGap +
-        TIMING.lettersIn;
+      setShowLockup(true);
+      const lettersTotal = TIMING.letterScatter + TIMING.lettersIn * LETTER_TAIL;
       await wait(lettersTotal + TIMING.holdEnd);
       if (alive()) finish();
     })();
@@ -146,61 +151,98 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
       { scaleY: ballScaleY.value * ballGrow.value },
     ],
   }));
-  const screenStyle = useAnimatedStyle(() => ({ opacity: screenOpacity.value }));
-
-  const subtitleDelay = TITLE.length * TIMING.letterStagger + TIMING.wordGap;
+  const lockupStyle = useAnimatedStyle(() => ({ opacity: lockupOpacity.value }));
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, styles.root, screenStyle]}>
+    <View style={[StyleSheet.absoluteFill, styles.root]}>
       <StatusBar style={filled ? "light" : "dark"} />
       <Pressable style={StyleSheet.absoluteFill} onPress={finish}>
         <View style={[StyleSheet.absoluteFill, styles.center]} pointerEvents="none">
           <Animated.View style={[styles.ball, ballStyle]} />
         </View>
 
-        {lettersStart !== null && (
-          <View style={[StyleSheet.absoluteFill, styles.center]} pointerEvents="none">
-            <FlipLetters
-              text={TITLE}
-              style={styles.title}
-              stagger={TIMING.letterStagger}
-              duration={TIMING.lettersIn}
-            />
-            <FlipLetters
-              text={SUBTITLE}
-              style={styles.subtitle}
-              stagger={TIMING.letterStagger}
-              duration={TIMING.lettersIn}
-              delay={subtitleDelay}
-            />
-          </View>
+        {showLockup && (
+          <Animated.View
+            style={[StyleSheet.absoluteFill, styles.center, lockupStyle]}
+            pointerEvents="none"
+          >
+            <LogoMark />
+            <View style={styles.wordRow}>
+              <FlipLetters
+                text={TITLE}
+                style={styles.title}
+                scatter={TIMING.letterScatter}
+                duration={TIMING.lettersIn}
+              />
+              <View style={styles.wordSpacer} />
+              <FlipLetters
+                text={SUBTITLE}
+                style={styles.subtitle}
+                scatter={TIMING.letterScatter}
+                duration={TIMING.lettersIn}
+                seed={37} // a different pattern from SPARKR's
+              />
+            </View>
+          </Animated.View>
         )}
       </Pressable>
+    </View>
+  );
+}
+
+// The S mark above the wordmark: fades up into place as the letters start flipping in.
+function LogoMark() {
+  const appear = useSharedValue(0);
+
+  useEffect(() => {
+    appear.value = withTiming(1, { duration: TIMING.logoIn, easing: Easing.out(Easing.cubic) });
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: appear.value,
+    transform: [{ translateY: (1 - appear.value) * 12 }, { scale: 0.86 + appear.value * 0.14 }],
+  }));
+
+  return (
+    <Animated.View style={style}>
+      <Image
+        source={require("../../../assets/splash-s.png")}
+        style={styles.logo}
+        resizeMode="contain"
+        fadeDuration={0} // Android fades images in over 300ms by default
+      />
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { backgroundColor: "#FFFFFF", zIndex: 100 },
+  root: { backgroundColor: colors.linen, zIndex: 100 },
   center: { alignItems: "center", justifyContent: "center" },
   ball: {
     width: BALL,
     height: BALL,
     borderRadius: BALL / 2,
-    backgroundColor: SPLASH_BLUE,
+    backgroundColor: colors.navy,
   },
+  logo: {
+    width: S_LOGO_WIDTH,
+    height: S_LOGO_HEIGHT,
+    tintColor: colors.linen,
+  },
+  // "SPARKR MEDIA" reads as one line; the weight carries the hierarchy instead of size.
+  wordRow: { flexDirection: "row", alignItems: "center", marginTop: 16 },
+  wordSpacer: { width: 11 },
+  // FlipLetters applies these to every letter, so spacing belongs on the row, not here.
   title: {
-    color: "#FFFFFF",
+    color: colors.linen,
     fontFamily: "DMSans_800ExtraBold",
-    fontSize: 44,
-    letterSpacing: 2,
+    fontSize: 28,
+    letterSpacing: 1.5,
   } as TextStyle,
   subtitle: {
-    color: "#FFFFFF",
+    color: colors.linen,
     fontFamily: "DMSans_500Medium",
-    fontSize: 14,
-    letterSpacing: 7,
-    marginTop: 6,
-    marginLeft: 7, // balances the trailing letterSpacing so MEDIA sits centred
+    fontSize: 28,
+    letterSpacing: 1.5,
   } as TextStyle,
 });
