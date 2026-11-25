@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Sparkr Phase 2
 
 Mobile ecosystem for Sparkr (restaurants, nail salons, spas): a Business & Influencer
@@ -39,6 +43,39 @@ docs/             project documentation (this index continues below)
 `business-app` uses Expo + NativeWind (Tailwind for RN) + React Navigation (bottom tabs).
 Root-level `package.json` defines the npm workspaces; run `npm install` from the repo
 root, not inside an individual app, so `@sparkr/shared`/`@sparkr/ui` stay linked.
+
+## Commands
+
+Run from `apps/business-app/`:
+
+```bash
+npx expo start            # dev server (also: npm run android | ios | web)
+npx tsc --noEmit          # typecheck — the only automated check that exists today
+npx expo install <pkg>    # add deps this way (SDK-compatible versions), not npm install
+```
+
+There is no test runner and no ESLint config yet. `npx expo lint` would scaffold one on
+first run — only do that if asked.
+
+## business-app architecture
+
+- **One binary, two roles.** `src/context/AuthContext.tsx` holds a mock `role`
+  (`business` | `influencer` | null). `src/navigation/RootNavigator.tsx` switches on it:
+  null → `RoleSelectScreen`, otherwise `BusinessTabNavigator` or `InfluencerTabNavigator`.
+  Screens live under `src/screens/{auth,business,influencer}/`.
+- **Navigation is React Navigation (bottom tabs), not Expo Router.** `apps/business-app/AGENTS.md`
+  is the stock Expo template and says to use Expo Router in `src/app/` — ignore that part;
+  its Expo-version warnings (check `expo` major in package.json, read versioned docs) still apply.
+- **Unbuilt screens** render `src/components/PlaceholderScreen.tsx` with an `upcoming`
+  list taken from `docs/10-frontend-phase-plan.md`; replace it when building the feature.
+- **Styling** is NativeWind `className` using the token names from `packages/ui/theme.js`
+  (`bg-primary`, `text-textMuted`, `bg-surface`, …). For non-className props (e.g. tab
+  tint colors) import `colors` from `@sparkr/ui`. `theme.js` is plain JS on purpose so
+  `tailwind.config.js` can `require()` it — keep it JS and update `theme.d.ts` alongside.
+- **Monorepo wiring:** `metro.config.js` adds the repo root to `watchFolders`/`nodeModulesPaths`
+  so Metro resolves the workspace packages; `@sparkr/shared` is consumed as raw TS (`main: index.ts`).
+- **Mock data:** new mocks belong in `packages/shared/mocks.ts` with types in `types.ts`.
+  `DashboardScreen.tsx` currently has inline mocks — move them to shared when touching it.
 
 ## Docs index
 

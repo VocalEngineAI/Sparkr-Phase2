@@ -20,6 +20,17 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#000000",
+          "image": "./assets/splash-s.png",
+          "imageWidth": 120,
+          "resizeMode": "contain"
+        }
+      ]
+    ]
   }
 }
