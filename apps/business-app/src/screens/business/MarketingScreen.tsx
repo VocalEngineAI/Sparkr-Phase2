@@ -5,8 +5,9 @@ export default function MarketingScreen() {
   return (
     <PlaceholderScreen
       title="Marketing"
-      description="Features 3–9 — Google reviews, social media, SMS, vouchers, deals, posts, One-Tab. See docs/03-business-app-features.md."
+      description="Features 1–9: influencer campaigns, Google reviews, social media, SMS, vouchers, deals, posts, One-Tab. See docs/03-business-app-features.md."
       upcoming={[
+        "Influencer campaigns: list, create wizard, applicants & hire, post review",
         "Google Reviews & AI replies",
         "Social media calendar & AI captions",
         "SMS campaigns & picture messages",

@@ -80,7 +80,13 @@ first run — only do that if asked.
 - **Monorepo wiring:** `metro.config.js` adds the repo root to `watchFolders`/`nodeModulesPaths`
   so Metro resolves the workspace packages; `@sparkr/shared` is consumed as raw TS (`main: index.ts`).
 - **Mock data:** new mocks belong in `packages/shared/mocks.ts` with types in `types.ts`.
-  `DashboardScreen.tsx` currently has inline mocks — move them to shared when touching it.
+  The demo business is **Tang Sushie** (sushi restaurant, owner Kenny Moy) — keep new
+  business-side mocks consistent with it.
+- **Business tabs** are Home · Marketing · Customers · Bookings · More. Marketing holds
+  Features 1–9 (campaigns, reviews, social, SMS, vouchers, deals, posts); Bookings holds
+  reservations/waitlist (16) and events & tickets.
+- **Use the `src/components/ui/` primitives** (`Button` variants/sizes, `Text`) and
+  `@expo/vector-icons` for icons rather than hand-styling `Pressable` buttons.
 
 ## Docs index
 
