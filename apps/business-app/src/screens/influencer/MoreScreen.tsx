@@ -1,6 +1,7 @@
 import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { useAuth } from "../../context/AuthContext";
+import Text from "../../components/Text";
 
 const items = [
   "Linked social accounts (Instagram, TikTok, YouTube, RedNote)",
