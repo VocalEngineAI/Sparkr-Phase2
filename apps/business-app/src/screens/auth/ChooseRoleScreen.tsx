@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { Pressable, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { Ionicons } from "@expo/vector-icons";
+// Per-icon imports: the package's root index re-exports ~2,400 icons, which bloats the
+// bundle and trips Metro's resolver.
+import Store from "lucide-react-native/icons/store";
+import Camera from "lucide-react-native/icons/camera";
+import type { LucideIcon } from "lucide-react-native";
 import { colors } from "@sparkr/ui";
 import type { AuthRole, AuthStackParamList } from "../../navigation/AuthNavigator";
 import AuthShell from "../../components/auth/AuthShell";
@@ -12,20 +16,18 @@ import { cn } from "../../lib/utils";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "ChooseRole">;
 
-type IconName = React.ComponentProps<typeof Ionicons>["name"];
-
 // One app, two account types. This is asked once, up front; sign-up and login carry the
 // answer along so the mock auth knows which role to sign in as.
-const ROLES: { value: AuthRole; icon: IconName; label: string; body: string }[] = [
+const ROLES: { value: AuthRole; icon: LucideIcon; label: string; body: string }[] = [
   {
     value: "business",
-    icon: "storefront-outline",
+    icon: Store,
     label: "Business",
     body: "Restaurants, salons, spas and other local businesses running campaigns.",
   },
   {
     value: "influencer",
-    icon: "sparkles-outline",
+    icon: Camera, // influencers visit and create content
     label: "Influencer",
     body: "Creators and reviewers who visit, post and get rewarded.",
   },
@@ -77,7 +79,7 @@ export default function ChooseRoleScreen({ navigation }: Props) {
                   selected ? "bg-linen/15" : "bg-background"
                 )}
               >
-                <Ionicons name={r.icon} size={24} color={selected ? colors.linen : colors.navy} />
+                <r.icon size={24} strokeWidth={1.75} color={selected ? colors.linen : colors.navy} />
               </View>
               <View className="flex-1">
                 <Text className={cn("text-lg font-bold mb-1", selected && "text-background")}>{r.label}</Text>
