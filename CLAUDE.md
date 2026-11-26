@@ -79,14 +79,24 @@ first run — only do that if asked.
   `tailwind.config.js` can `require()` it — keep it JS and update `theme.d.ts` alongside.
 - **Monorepo wiring:** `metro.config.js` adds the repo root to `watchFolders`/`nodeModulesPaths`
   so Metro resolves the workspace packages; `@sparkr/shared` is consumed as raw TS (`main: index.ts`).
-- **Mock data:** new mocks belong in `packages/shared/mocks.ts` with types in `types.ts`.
-  The demo business is **Tang Sushie** (sushi restaurant, owner Kenny Moy) — keep new
-  business-side mocks consistent with it.
-- **Business tabs** are Home · Marketing · Customers · Bookings · More. Marketing holds
-  Features 1–9 (campaigns, reviews, social, SMS, vouchers, deals, posts); Bookings holds
-  reservations/waitlist (16) and events & tickets.
-- **Use the `src/components/ui/` primitives** (`Button` variants/sizes, `Text`) and
-  `@expo/vector-icons` for icons rather than hand-styling `Pressable` buttons.
+- **Mock data:** lives in `packages/shared`, split by area — types in `types/*.ts`, data in
+  `mocks/*.ts` (business, home, marketing, customers, bookings, account), re-exported by the
+  `types.ts` / `mocks.ts` barrels. The demo business is **Tang Sushie** (NYC sushi
+  restaurant, owner Kenny Moy) — keep new business-side mocks consistent with it.
+- **Business tabs** are Home · Marketing · Customers · Bookings · More. Every tab except
+  Home is a native stack: a hub screen (`*HubScreen`, no header, large title, list of
+  `FeatureCard`s) → feature screens under the native header. Param lists and screen-prop
+  types live in `src/navigation/businessTypes.ts`; screens are in
+  `src/screens/business/{marketing,customers,bookings,more}/`. Cross-tab links use
+  `navigate("<Tab>", { screen, initial: false })` so the hub stays underneath.
+- **Business UI kit:** `src/components/business/kit.tsx` (Screen, Section, Card, ListRow,
+  SwitchRow, Segmented, Chips, StatGrid, Badge, PlatformIcon, `useHeaderButton`, `money`,
+  `notYet` for not-yet-built actions) — build business screens from it. `QrScanner.tsx` is
+  the shared camera scanner (ticket entry + cashier coins). Everything tappable is the ui
+  `Button` or a native RN control (`Switch`, `TextInput` via ui `Input`) — don't hand-style
+  `Pressable`s. Icons come from `@expo/vector-icons` (Ionicons).
+- Create/edit wizards (campaign builder, new deal/voucher/event, etc.) are not built yet;
+  their buttons call `notYet()` with a description of the flow.
 
 ## Docs index
 

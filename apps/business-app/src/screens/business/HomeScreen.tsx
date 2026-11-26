@@ -1,8 +1,6 @@
 import React, { useState } from "react";
-import { Alert, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@sparkr/ui";
 import {
@@ -18,21 +16,29 @@ import {
   type BusinessEvent,
   type Reservation,
 } from "@sparkr/shared";
-import { Button } from "../../components/ui/button";
-import { Text } from "../../components/ui/text";
+import {
+  Actions,
+  Badge,
+  Button,
+  IconCircle,
+  LinkButton,
+  ListCard,
+  money,
+  notYet,
+  ProgressBar,
+  Section,
+  Segmented,
+  StatStrip,
+  Text,
+  type IconName,
+} from "../../components/business/kit";
 import { cn } from "../../lib/utils";
-import type { BusinessTabParamList } from "../../navigation/BusinessTabNavigator";
+import type { HomeScreenProps } from "../../navigation/businessTypes";
 
-type IconName = React.ComponentProps<typeof Ionicons>["name"];
-type Nav = BottomTabNavigationProp<BusinessTabParamList, "Home">;
+type Nav = HomeScreenProps["navigation"];
 
 // Business home dashboard: overview → what needs attention → shortcuts → how it's going →
 // what's coming up → what just happened. Everything is mock data from @sparkr/shared.
-
-function money(n: number, cents = true) {
-  const fixed = n.toFixed(cents ? 2 : 0);
-  return `$${fixed.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
-}
 
 function greeting() {
   const h = new Date().getHours();
@@ -41,16 +47,28 @@ function greeting() {
   return "Good evening";
 }
 
-function notYet(what: string) {
-  Alert.alert(what, "This isn't connected yet.");
-}
+// Deep links into a tab's stack. `initial: false` keeps the tab's hub underneath, so back
+// returns to it.
+const go = {
+  campaigns: (n: Nav) => n.navigate("Marketing", { screen: "Campaigns", initial: false }),
+  deals: (n: Nav) => n.navigate("Marketing", { screen: "Deals", initial: false }),
+  sms: (n: Nav) => n.navigate("Marketing", { screen: "Messaging", initial: false }),
+  scan: (n: Nav) => n.navigate("Customers", { screen: "CoinScanner", initial: false }),
+  reservations: (n: Nav) => n.navigate("Bookings", { screen: "Reservations", initial: false }),
+  events: (n: Nav) => n.navigate("Bookings", { screen: "Events", initial: false }),
+  wallet: (n: Nav) => n.navigate("More", { screen: "Wallet", initial: false }),
+};
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<Nav>();
   const [actions, setActions] = useState(mockActionRequired);
 
   const dismiss = (id: string) => setActions((list) => list.filter((a) => a.id !== id));
+  const openAction = (item: ActionRequiredItem) => {
+    if (item.kind === "arrival_check") go.reservations(navigation);
+    else if (item.kind === "wallet_low") go.wallet(navigation);
+    else go.campaigns(navigation);
+  };
 
   return (
     <ScrollView
@@ -61,20 +79,13 @@ export default function HomeScreen() {
       <Header alertCount={actions.length} />
 
       <View className="px-5 gap-8">
-        <OverviewCard />
+        <OverviewCard onTopUp={() => go.wallet(navigation)} />
 
         {actions.length > 0 ? (
           <Section title="Needs your attention" count={actions.length}>
             <View className="gap-3">
               {actions.map((item) => (
-                <ActionCard
-                  key={item.id}
-                  item={item}
-                  onDone={() => dismiss(item.id)}
-                  onOpen={() =>
-                    navigation.navigate(item.kind === "arrival_check" ? "Bookings" : "Marketing")
-                  }
-                />
+                <ActionCard key={item.id} item={item} onDone={() => dismiss(item.id)} onOpen={() => openAction(item)} />
               ))}
             </View>
           </Section>
@@ -85,10 +96,10 @@ export default function HomeScreen() {
         </Section>
 
         <Section title="Performance" subtitle="Last 7 days">
-          <Highlights />
+          <StatStrip items={mockPerformanceHighlights} />
         </Section>
 
-        <Upcoming onSeeAll={() => navigation.navigate("Bookings")} />
+        <Upcoming navigation={navigation} />
 
         <Section title="Recent activity">
           <RecentActivity />
@@ -143,7 +154,7 @@ function Header({ alertCount }: { alertCount: number }) {
   );
 }
 
-function OverviewCard() {
+function OverviewCard({ onTopUp }: { onTopUp: () => void }) {
   const stats: { label: string; value: string; icon: IconName }[] = [
     { label: "Members", value: mockBusiness.memberCount.toLocaleString("en-US"), icon: "people-outline" },
     { label: "Check-ins today", value: String(mockBusinessOverview.checkInsToday), icon: "enter-outline" },
@@ -160,14 +171,12 @@ function OverviewCard() {
       <View className="flex-row items-start justify-between">
         <View>
           <Text className="text-sm text-primaryLight">Wallet balance</Text>
-          <Text className="text-3xl font-extrabold text-background mt-1">
-            {money(mockBusiness.walletBalance)}
-          </Text>
+          <Text className="text-3xl font-extrabold text-background mt-1">{money(mockBusiness.walletBalance, true)}</Text>
           <Text className="text-xs text-primaryLight mt-1">
             {mockBusinessOverview.activeCampaigns} campaigns · {mockBusinessOverview.activeDeals} deals live
           </Text>
         </View>
-        <Button variant="secondary" size="sm" onPress={() => notYet("Top up wallet")}>
+        <Button variant="secondary" size="sm" onPress={onTopUp}>
           <Ionicons name="add" size={16} color={colors.text} />
           <Text>Top up</Text>
         </Button>
@@ -193,42 +202,6 @@ function OverviewCard() {
 }
 
 // ---------------------------------------------------------------------------
-// Section shell
-// ---------------------------------------------------------------------------
-
-function Section({
-  title,
-  subtitle,
-  count,
-  action,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  count?: number;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <View>
-      <View className="flex-row items-center justify-between mb-3">
-        <View className="flex-row items-center gap-2">
-          <Text className="text-lg font-bold">{title}</Text>
-          {count ? (
-            <View className="bg-accent rounded-full px-2 py-0.5">
-              <Text className="text-xs font-bold">{count}</Text>
-            </View>
-          ) : null}
-          {subtitle ? <Text className="text-sm text-textMuted">{subtitle}</Text> : null}
-        </View>
-        {action}
-      </View>
-      {children}
-    </View>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Action required
 // ---------------------------------------------------------------------------
 
@@ -240,15 +213,7 @@ const ACTION_ICONS: Record<ActionRequiredItem["kind"], IconName> = {
   wallet_low: "wallet-outline",
 };
 
-function ActionCard({
-  item,
-  onDone,
-  onOpen,
-}: {
-  item: ActionRequiredItem;
-  onDone: () => void;
-  onOpen: () => void;
-}) {
+function ActionCard({ item, onDone, onOpen }: { item: ActionRequiredItem; onDone: () => void; onOpen: () => void }) {
   return (
     <View
       className={cn(
@@ -257,17 +222,8 @@ function ActionCard({
       )}
     >
       <View className="flex-row">
-        <View
-          className={cn(
-            "w-10 h-10 rounded-full items-center justify-center mr-3",
-            item.urgent ? "bg-warning/10" : "bg-surface"
-          )}
-        >
-          <Ionicons
-            name={ACTION_ICONS[item.kind]}
-            size={20}
-            color={item.urgent ? colors.warning : colors.text}
-          />
+        <View className="mr-3">
+          <IconCircle icon={ACTION_ICONS[item.kind]} tone={item.urgent ? "warning" : "neutral"} />
         </View>
         <View className="flex-1">
           <View className="flex-row items-center justify-between gap-2">
@@ -284,7 +240,7 @@ function ActionCard({
         </View>
       </View>
 
-      <View className="flex-row justify-end gap-2 mt-3">
+      <Actions>
         {item.kind === "arrival_check" ? (
           // Feature 16 arrival check: answer it right here.
           <>
@@ -301,7 +257,7 @@ function ActionCard({
             <Text>{item.cta}</Text>
           </Button>
         )}
-      </View>
+      </Actions>
     </View>
   );
 }
@@ -311,13 +267,13 @@ function ActionCard({
 // ---------------------------------------------------------------------------
 
 function QuickActions({ navigation }: { navigation: Nav }) {
-  const items: { label: string; icon: IconName; tab: keyof BusinessTabParamList }[] = [
-    { label: "New campaign", icon: "megaphone-outline", tab: "Marketing" },
-    { label: "Create deal", icon: "pricetag-outline", tab: "Marketing" },
-    { label: "Send SMS", icon: "chatbubble-ellipses-outline", tab: "Marketing" },
-    { label: "Scan QR", icon: "qr-code-outline", tab: "Customers" },
-    { label: "Add booking", icon: "add-circle-outline", tab: "Bookings" },
-    { label: "New event", icon: "ticket-outline", tab: "Bookings" },
+  const items: { label: string; icon: IconName; open: (n: Nav) => void }[] = [
+    { label: "New campaign", icon: "megaphone-outline", open: go.campaigns },
+    { label: "Create deal", icon: "pricetag-outline", open: go.deals },
+    { label: "Send SMS", icon: "chatbubble-ellipses-outline", open: go.sms },
+    { label: "Scan QR", icon: "qr-code-outline", open: go.scan },
+    { label: "Bookings", icon: "restaurant-outline", open: go.reservations },
+    { label: "Events", icon: "ticket-outline", open: go.events },
   ];
 
   return (
@@ -327,7 +283,7 @@ function QuickActions({ navigation }: { navigation: Nav }) {
           key={a.label}
           variant="secondary"
           className="w-[31.5%] h-auto flex-col gap-2 py-4 px-2"
-          onPress={() => navigation.navigate(a.tab)}
+          onPress={() => a.open(navigation)}
         >
           <Ionicons name={a.icon} size={24} color={colors.text} />
           <Text className="text-xs text-center">{a.label}</Text>
@@ -338,126 +294,61 @@ function QuickActions({ navigation }: { navigation: Nav }) {
 }
 
 // ---------------------------------------------------------------------------
-// Performance highlights
-// ---------------------------------------------------------------------------
-
-function Highlights() {
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      className="-mx-5"
-      contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-    >
-      {mockPerformanceHighlights.map((h) => {
-        const up = h.changePct >= 0;
-        return (
-          <View key={h.id} className="w-36 bg-surface rounded-2xl p-4">
-            <Text className="text-xs text-textMuted">{h.label}</Text>
-            <Text className="text-2xl font-extrabold mt-2">{h.value}</Text>
-            <View className="flex-row items-center mt-2">
-              <Ionicons
-                name={up ? "trending-up" : "trending-down"}
-                size={14}
-                color={up ? colors.success : colors.warning}
-              />
-              <Text className={cn("text-xs font-semibold ml-1", up ? "text-success" : "text-warning")}>
-                {up ? "+" : ""}
-                {h.changePct}%
-              </Text>
-            </View>
-          </View>
-        );
-      })}
-    </ScrollView>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Upcoming reservations & events
 // ---------------------------------------------------------------------------
 
-function Upcoming({ onSeeAll }: { onSeeAll: () => void }) {
+function Upcoming({ navigation }: { navigation: Nav }) {
   const [tab, setTab] = useState<"reservations" | "events">("reservations");
 
   return (
     <Section
       title="Coming up"
       action={
-        <Button variant="link" size="sm" className="px-0" onPress={onSeeAll}>
-          <Text className="text-text font-semibold">See all</Text>
-        </Button>
+        <LinkButton
+          label="See all"
+          onPress={() => (tab === "reservations" ? go.reservations(navigation) : go.events(navigation))}
+        />
       }
     >
-      <View className="flex-row bg-surface rounded-2xl p-1 mb-3">
-        {(
-          [
-            ["reservations", `Reservations (${mockUpcomingReservations.length})`],
-            ["events", `Events (${mockUpcomingEvents.length})`],
-          ] as const
-        ).map(([key, label]) => (
-          <Button
-            key={key}
-            size="sm"
-            variant={tab === key ? "default" : "ghost"}
-            className="flex-1"
-            onPress={() => setTab(key)}
-            accessibilityState={{ selected: tab === key }}
-          >
-            <Text>{label}</Text>
-          </Button>
-        ))}
-      </View>
+      <Segmented
+        options={[
+          ["reservations", `Reservations (${mockUpcomingReservations.length})`],
+          ["events", `Events (${mockUpcomingEvents.length})`],
+        ]}
+        value={tab}
+        onChange={setTab}
+        className="mb-3"
+      />
 
-      <View className="rounded-2xl border border-border">
+      <ListCard>
         {tab === "reservations"
           ? mockUpcomingReservations.map((r, i) => (
               <ReservationRow key={r.id} r={r} last={i === mockUpcomingReservations.length - 1} />
             ))
-          : mockUpcomingEvents.map((e, i) => (
-              <EventRow key={e.id} e={e} last={i === mockUpcomingEvents.length - 1} />
-            ))}
-      </View>
+          : mockUpcomingEvents.map((e, i) => <EventRow key={e.id} e={e} last={i === mockUpcomingEvents.length - 1} />)}
+      </ListCard>
     </Section>
   );
 }
 
-function Badge({ label, tone = "neutral" }: { label: string; tone?: "neutral" | "accent" | "warning" }) {
-  return (
-    <View
-      className={cn(
-        "rounded-full px-2 py-0.5",
-        tone === "accent" ? "bg-accent" : tone === "warning" ? "bg-warning/10" : "bg-surface"
-      )}
-    >
-      <Text className={cn("text-[11px] font-semibold", tone === "warning" && "text-warning")}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 function ReservationRow({ r, last }: { r: Reservation; last: boolean }) {
-  const time = r.when.split("·").pop()?.trim() ?? r.when;
   return (
     <View className={cn("flex-row items-center p-4", !last && "border-b border-border")}>
       <View className="w-16">
-        <Text className="font-bold">{time.replace(/ (AM|PM)$/, "")}</Text>
-        <Text className="text-xs text-textMuted">{time.match(/(AM|PM)$/)?.[0]}</Text>
+        <Text className="font-bold">{r.time.replace(/ (AM|PM)$/, "")}</Text>
+        <Text className="text-xs text-textMuted">{r.time.match(/(AM|PM)$/)?.[0]}</Text>
       </View>
       <View className="flex-1">
         <View className="flex-row items-center gap-1.5 flex-wrap">
           <Text className="font-semibold">{r.guestName}</Text>
           {r.vip ? <Badge label="VIP" tone="accent" /> : null}
-          {r.status === "waitlist" ? <Badge label="Waitlist" tone="warning" /> : null}
-          {r.deposit ? <Badge label={`${money(r.deposit, false)} deposit`} /> : null}
+          {r.deposit ? <Badge label={`${money(r.deposit)} deposit`} /> : null}
         </View>
         <Text className="text-sm text-textMuted mt-0.5">
           Party of {r.partySize}
           {r.note ? ` · ${r.note}` : ""}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
     </View>
   );
 }
@@ -471,13 +362,11 @@ function EventRow({ e, last }: { e: BusinessEvent; last: boolean }) {
           <Text className="font-semibold">{e.title}</Text>
           <Text className="text-sm text-textMuted mt-0.5">{e.when}</Text>
         </View>
-        <Text className="font-bold">{money(e.ticketsSold * e.ticketPrice, false)}</Text>
+        <Text className="font-bold">{money(e.ticketsSold * e.ticketPrice)}</Text>
       </View>
-      <View className="h-2 rounded-full bg-surface mt-3 overflow-hidden">
-        <View className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
-      </View>
+      <ProgressBar pct={pct} className="mt-3" />
       <Text className="text-xs text-textMuted mt-1.5">
-        {e.ticketsSold} of {e.ticketsTotal} tickets sold · {money(e.ticketPrice, false)} each
+        {e.ticketsSold} of {e.ticketsTotal} tickets sold · {money(e.ticketPrice)} each
       </Text>
     </View>
   );
@@ -502,8 +391,8 @@ function RecentActivity() {
     <View className="gap-4">
       {mockRecentActivity.map((a) => (
         <View key={a.id} className="flex-row items-start">
-          <View className="w-10 h-10 rounded-full bg-surface items-center justify-center mr-3">
-            <Ionicons name={ACTIVITY_ICONS[a.kind]} size={18} color={colors.text} />
+          <View className="mr-3">
+            <IconCircle icon={ACTIVITY_ICONS[a.kind]} />
           </View>
           <View className="flex-1">
             <View className="flex-row items-center justify-between">
@@ -517,3 +406,4 @@ function RecentActivity() {
     </View>
   );
 }
+

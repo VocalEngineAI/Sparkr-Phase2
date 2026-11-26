@@ -27,7 +27,11 @@ reviewed independently. Full feature definitions are in [03](03-business-app-fea
 - [x] Repo scaffolded as npm workspaces monorepo (`apps/`, `packages/shared`, `packages/ui`, `backend/` placeholder)
 - [x] `business-app` scaffolded (Expo + TypeScript + NativeWind + React Navigation)
 - [x] Role-select auth flow + business/influencer tab shells with placeholder screens
-- [ ] Build out each placeholder screen per the inventory below, in order
+- [x] Business side: Home dashboard + Marketing / Customers / Bookings / More tabs, each a hub
+  with one management screen per feature (mock data for Tang Sushie), ticket & coin QR scanners
+- [ ] Business create/edit wizards (campaign builder, new deal/voucher/gift card/event/post, SMS
+  scheduling, phone booking entry)
+- [ ] Influencer side screens
 
 ## Phase 1 — Business & Influencer App (mobile)
 
