@@ -249,6 +249,13 @@ export const mockGoogleRatingTrend: { month: string; rating: number }[] = [
 
 export const mockGoogleReviews: GoogleReview[] = [
   {
+    id: "gr_0",
+    author: "Priya K.",
+    rating: 3,
+    text: "Fresh fish and friendly staff, but the omakase felt rushed for the price. Would try the hand rolls next time.",
+    time: "20m ago",
+  },
+  {
     id: "gr_1",
     author: "Alicia M.",
     rating: 5,
