@@ -181,20 +181,47 @@ export type GiftCardProduct = {
 
 export type DealKind = "happy_hour" | "flash" | "secret_menu" | "limited_time";
 
+export type DealStatus = "live" | "scheduled" | "ended";
+
+/**
+ * When a deal runs. Instants are ISO strings; recurring windows use "HH:MM" local time and
+ * `days` are JS weekday numbers (0 = Sunday). Status and countdowns derive from this.
+ */
+export type DealTiming =
+  | { type: "window"; startsAt: string; endsAt: string }
+  | { type: "recurring"; days: number[]; start: string; end: string; startsAt: string }
+  | { type: "ongoing"; startsAt: string };
+
+/** One day of deal analytics. `date` is YYYY-MM-DD. */
+export type DealDaily = { date: string; views: number; saves: number; redemptions: number; revenue: number };
+
 export type Deal = {
   id: string;
   title: string;
   kind: DealKind;
+  /** Human-readable schedule ("Weekdays • 4 PM – 6 PM"); derived from `timing` for new deals. */
   schedule: string;
+  timing: DealTiming;
+  /** Big offer headline on the card ("20% OFF", "$5 ROLLS"). */
+  highlight?: string;
+  /** Photo URL. Sample deals use hosted stock photos; uploads come with the backend. */
+  image?: string;
+  /** What the customer gets ("$5 hand rolls, 2 per visit"). */
+  offer?: string;
+  description?: string;
   minSpend?: number;
+  /** Happy hours: per visit. Everything else: total redemptions before the deal closes. */
   redemptionLimit?: number;
   expires?: string;
-  status: "live" | "scheduled" | "ended";
+  /** Stored status; screens re-derive it from `timing` so it stays accurate over time. */
+  status: DealStatus;
   active: boolean;
   redemptions: number;
   views: number;
   saves: number;
   revenue: number;
+  /** Daily analytics for the last 30 days, oldest first. Sums to the lifetime totals above. */
+  history: DealDaily[];
 };
 
 // --- Feature 8: Business posts ----------------------------------------------

@@ -4,6 +4,7 @@ import type {
   CampaignApplicant,
   CampaignPostReview,
   Deal,
+  DealDaily,
   GiftCardProduct,
   GooglePost,
   GoogleReputation,
@@ -538,71 +539,132 @@ export const mockGiftCards: GiftCardProduct[] = [
 
 // --- Feature 7: Happy hours & deals -----------------------------------------
 
+// Deal timing is relative to when the app loads so countdowns, statuses and the 30-day
+// analytics window stay meaningful on sample data. Real deals carry fixed timestamps.
+const NOW = Date.now();
+const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
+const ago = (ms: number) => new Date(NOW - ms).toISOString();
+const ahead = (ms: number) => new Date(NOW + ms).toISOString();
+const dateKey = (daysAgo: number) => new Date(NOW - daysAgo * DAY).toISOString().slice(0, 10);
+
+/**
+ * Spreads lifetime totals across the last 30 days (oldest first) with a weekend bump, only
+ * on days the deal was running, so each series sums exactly to the totals. Deterministic.
+ */
+function dailyHistory(
+  totals: { views: number; saves: number; redemptions: number; revenue: number },
+  activeDaysAgo: [from: number, to: number] = [29, 0]
+): DealDaily[] {
+  const DAYS = 30;
+  const weights = Array.from({ length: DAYS }, (_, i) => {
+    const daysAgo = DAYS - 1 - i;
+    if (daysAgo > activeDaysAgo[0] || daysAgo < activeDaysAgo[1]) return 0;
+    const dow = new Date(NOW - daysAgo * DAY).getDay();
+    return 1 + (dow === 5 || dow === 6 ? 0.6 : 0) + 0.2 * Math.sin(i * 1.7);
+  });
+  const sum = weights.reduce((a, b) => a + b, 0) || 1;
+  const allocate = (total: number) => {
+    let cum = 0;
+    let prev = 0;
+    return weights.map((w) => {
+      cum += w;
+      const next = Math.round((total * cum) / sum);
+      const v = next - prev;
+      prev = next;
+      return v;
+    });
+  };
+  const v = allocate(totals.views);
+  const sv = allocate(totals.saves);
+  const r = allocate(totals.redemptions);
+  const rev = allocate(totals.revenue);
+  return weights.map((_, i) => ({ date: dateKey(DAYS - 1 - i), views: v[i], saves: sv[i], redemptions: r[i], revenue: rev[i] }));
+}
+
+const totals = (views: number, saves: number, redemptions: number, revenue: number) => ({ views, saves, redemptions, revenue });
+
 export const mockDeals: Deal[] = [
   {
     id: "d_1",
-    title: "$5 hand rolls",
+    title: "Sushi Happy Hour",
     kind: "happy_hour",
-    schedule: "Weekdays · 4–6 PM",
+    schedule: "Weekdays • 4 PM – 6 PM",
+    timing: { type: "recurring", days: [1, 2, 3, 4, 5], start: "16:00", end: "18:00", startsAt: ago(60 * DAY) },
+    highlight: "$5 ROLLS",
+    image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=400&q=70&auto=format&fit=crop",
+    offer: "Any hand roll for $5, up to 2 per visit",
+    description: "Our weekday happy hour at the Grand St counter. Pairs with half-price sake flights.",
     minSpend: 15,
     redemptionLimit: 2,
     status: "live",
     active: true,
-    redemptions: 212,
-    views: 4810,
-    saves: 362,
-    revenue: 4240,
+    ...totals(4810, 362, 212, 4240),
+    history: dailyHistory(totals(4810, 362, 212, 4240)),
   },
   {
     id: "d_2",
     title: "Torched salmon secret roll",
     kind: "secret_menu",
-    schedule: "Members only · every day",
+    schedule: "Members only • every day",
+    timing: { type: "ongoing", startsAt: ago(90 * DAY) },
+    highlight: "OFF-MENU",
+    image: "https://images.unsplash.com/photo-1615361200098-9e630ec29b4e?w=400&h=400&q=70&auto=format&fit=crop",
+    offer: "Off-menu torched salmon roll with yuzu kosho",
+    description: "Only Sparkr members can see this one. Ask for it by name at the counter.",
     status: "live",
     active: true,
-    redemptions: 74,
-    views: 2210,
-    saves: 198,
-    revenue: 2630,
+    ...totals(2210, 198, 74, 2630),
+    history: dailyHistory(totals(2210, 198, 74, 2630)),
   },
   {
     id: "d_3",
     title: "Half-price sake flight",
     kind: "flash",
-    schedule: "Today only · 8–10 PM",
+    schedule: "Today • 8 PM – 10 PM",
+    timing: { type: "window", startsAt: ago(35 * 60_000), endsAt: ahead(2 * HOUR + 10 * 60_000) },
+    highlight: "50% OFF",
+    image: "https://images.unsplash.com/photo-1664477407933-dd42ed0c6c62?w=400&h=400&q=70&auto=format&fit=crop",
+    offer: "Three-pour sake flight for $12 (usually $24)",
+    description: "Tonight only while the flight menu lasts. First 40 flights.",
     redemptionLimit: 40,
     expires: "Tonight",
     status: "live",
     active: true,
-    redemptions: 12,
-    views: 640,
-    saves: 51,
-    revenue: 360,
+    ...totals(640, 51, 12, 360),
+    history: dailyHistory(totals(640, 51, 12, 360), [0, 0]),
   },
   {
     id: "d_4",
     title: "Holiday bento box",
     kind: "limited_time",
     schedule: "Dec 15 – Dec 31",
+    timing: { type: "window", startsAt: ahead(2 * DAY + 3 * HOUR + 15 * 60_000), endsAt: ahead(18 * DAY) },
+    highlight: "$28 BENTO",
+    image: "https://images.unsplash.com/photo-1696677049263-cc38af1c7681?w=400&h=400&q=70&auto=format&fit=crop",
+    offer: "Seasonal bento with chef's selection, $28",
+    description: "Limited holiday menu. Pre-launch saves come from the teaser post.",
     minSpend: 30,
     status: "scheduled",
     active: true,
-    redemptions: 0,
-    views: 0,
-    saves: 27,
-    revenue: 0,
+    ...totals(0, 27, 0, 0),
+    history: dailyHistory(totals(0, 27, 0, 0), [9, 0]),
   },
   {
     id: "d_5",
     title: "Halloween dragon roll",
     kind: "limited_time",
     schedule: "Oct 25 – Oct 31",
+    timing: { type: "window", startsAt: ago(27 * DAY), endsAt: ago(20 * DAY) },
+    highlight: "$16 ROLL",
+    image: "https://images.unsplash.com/photo-1617196035154-1e7e6e28b0db?w=400&h=400&q=70&auto=format&fit=crop",
+    offer: "Black-rice dragon roll, $16",
+    minSpend: 20,
+    expires: "Oct 31",
     status: "ended",
     active: false,
-    redemptions: 166,
-    views: 3920,
-    saves: 240,
-    revenue: 3150,
+    ...totals(3120, 240, 158, 2528),
+    history: dailyHistory(totals(3120, 240, 158, 2528), [27, 20]),
   },
 ];
 
