@@ -11,8 +11,8 @@ export type Reservation = {
   time: string;
   /** confirmed → seated → finished (table cleared); or cancelled / no_show. */
   status: "confirmed" | "seated" | "finished" | "cancelled" | "no_show";
-  /** Tables (ids from `ReservationSettings.tables`) the party is assigned to. */
-  tableIds?: string[];
+  /** Table label, e.g. "T4" or "Counter 3–4". */
+  table?: string;
   phone?: string;
   /** Deposit collected in-app, if the business has deposits enabled. */
   deposit?: number;
@@ -40,17 +40,9 @@ export type WaitlistEntry = {
   notified?: boolean;
 };
 
-/** One table (or one counter seat) on the floor. */
-export type DiningTable = {
-  id: string;
-  label: string;
-  seats: number;
-  area: "dining" | "counter";
-};
-
 export type ReservationSettings = {
-  /** The floor: capacity is the sum of these seats. */
-  tables: DiningTable[];
+  tables: number;
+  seats: number;
   /** Service hours, as hours on a 24h clock (17 = 5 PM). */
   serviceStart: number;
   serviceEnd: number;

@@ -3,7 +3,6 @@ import type {
   EventInfluencer,
   PromoCode,
   Reservation,
-  DiningTable,
   ReservationSettings,
   Ticket,
   WaitlistEntry,
@@ -18,7 +17,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 0,
     time: "6:00 PM",
     status: "confirmed",
-    tableIds: ["T4"],
+    table: "T4",
     phone: "(212) 555-0193",
     source: "app",
   },
@@ -30,7 +29,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 0,
     time: "7:30 PM",
     status: "confirmed",
-    tableIds: ["T9", "T10"],
+    table: "T9 + T10",
     phone: "(929) 555-0175",
     deposit: 80,
     note: "Birthday — dessert plate",
@@ -45,7 +44,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 0,
     time: "8:00 PM",
     status: "confirmed",
-    tableIds: ["C3", "C4"],
+    table: "Counter 3–4",
     phone: "(347) 555-0129",
     vip: true,
     note: "Anniversary dinner",
@@ -59,7 +58,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 0,
     time: "8:30 PM",
     status: "confirmed",
-    tableIds: ["T2"],
+    table: "T2",
     phone: "(646) 555-0170",
     source: "phone",
   },
@@ -71,7 +70,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 0,
     time: "5:30 PM",
     status: "seated",
-    tableIds: ["T1"],
+    table: "T1",
     source: "app",
   },
   {
@@ -82,7 +81,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 1,
     time: "7:00 PM",
     status: "confirmed",
-    tableIds: ["T9"],
+    table: "T9",
     deposit: 60,
     source: "app",
   },
@@ -94,7 +93,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 1,
     time: "8:15 PM",
     status: "confirmed",
-    tableIds: ["C1", "C2"],
+    table: "Counter 1–2",
     source: "phone",
   },
   {
@@ -105,7 +104,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 0,
     time: "6:30 PM",
     status: "confirmed",
-    tableIds: ["T6"],
+    table: "T6",
     source: "app",
   },
   {
@@ -116,7 +115,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 0,
     time: "7:00 PM",
     status: "confirmed",
-    tableIds: ["T7"],
+    table: "T7",
     source: "app",
     note: "Shellfish allergy",
   },
@@ -128,7 +127,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 0,
     time: "5:00 PM",
     status: "finished",
-    tableIds: ["T8"],
+    table: "T8",
     source: "app",
   },
   {
@@ -139,7 +138,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 0,
     time: "9:00 PM",
     status: "confirmed",
-    tableIds: ["C5", "C6"],
+    table: "Counter 5–6",
     source: "phone",
   },
   {
@@ -160,7 +159,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 2,
     time: "7:30 PM",
     status: "confirmed",
-    tableIds: ["T4"],
+    table: "T4",
     source: "app",
   },
   {
@@ -171,7 +170,7 @@ export const mockReservations: Reservation[] = [
     dayOffset: 3,
     time: "8:00 PM",
     status: "confirmed",
-    tableIds: ["T3"],
+    table: "T3",
     source: "phone",
   },
 ];
@@ -182,31 +181,9 @@ export const mockWaitlist: WaitlistEntry[] = [
   { id: "wl_3", name: "Hernández", partySize: 5, quotedMinutes: 45, waitedMinutes: 4, phone: "(347) 555-0112", source: "walk_in", note: "High chair" },
 ];
 
-// Tang Sushie, Grand St: ten tables in the dining room plus an eight-seat sushi counter.
-const diningTables: DiningTable[] = (
-  [
-    ["T1", 2],
-    ["T2", 4],
-    ["T3", 2],
-    ["T4", 4],
-    ["T5", 4],
-    ["T6", 2],
-    ["T7", 6],
-    ["T8", 4],
-    ["T9", 6],
-    ["T10", 6],
-  ] as const
-).map(([id, seats]) => ({ id, label: id, seats, area: "dining" }));
-
-const counterSeats: DiningTable[] = Array.from({ length: 8 }, (_, i) => ({
-  id: `C${i + 1}`,
-  label: String(i + 1),
-  seats: 1,
-  area: "counter",
-}));
-
 export const mockReservationSettings: ReservationSettings = {
-  tables: [...diningTables, ...counterSeats],
+  tables: 12,
+  seats: 48,
   serviceStart: 17,
   serviceEnd: 23,
   turnMinutes: 90,

@@ -1,5 +1,5 @@
 // Pieces shared by the Reservations and Booking Settings screens: time helpers, the
-// bottom sheet, party-size avatar, waitlist ring, table shapes and the +/- stepper.
+// bottom sheet, party-size avatar, waitlist ring and the +/- stepper.
 
 import React from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
@@ -8,7 +8,7 @@ import Svg, { Circle } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@sparkr/ui";
-import type { DiningTable, Reservation } from "@sparkr/shared";
+import type { Reservation } from "@sparkr/shared";
 import { Button, Text, type Tone } from "../../../components/business/kit";
 import { cn } from "../../../lib/utils";
 
@@ -67,35 +67,6 @@ export const counts = (r: Reservation) => r.status !== "cancelled" && r.status !
 /** Confirmed, today, and more than 15 minutes past the booked time. */
 export function isLate(r: Reservation, isToday: boolean) {
   return isToday && r.status === "confirmed" && NOW_MINUTES - toMinutes(r.time) > 15;
-}
-
-/** ["T9","T10"] → "T9 + T10"; counter seats ["C3","C4"] → "Counter 3–4". */
-export function tableLabel(ids: string[] | undefined, tables: DiningTable[]) {
-  if (!ids?.length) return "No table yet";
-  const found = ids.map((id) => tables.find((t) => t.id === id)).filter(Boolean) as DiningTable[];
-  const counter = found.filter((t) => t.area === "counter").map((t) => t.label);
-  const dining = found.filter((t) => t.area === "dining").map((t) => t.label);
-  const parts = [...dining];
-  if (counter.length) parts.push(`Counter ${counter.length > 1 ? `${counter[0]}–${counter[counter.length - 1]}` : counter[0]}`);
-  return parts.join(" + ") || ids.join(" + ");
-}
-
-export type TableState = { kind: "free" | "reserved" | "seated"; r?: Reservation };
-
-/** What each table is doing: seated now, next booking held for it, or free. */
-export function floorState(tables: DiningTable[], dayReservations: Reservation[]) {
-  const state: Record<string, TableState> = {};
-  for (const t of tables) state[t.id] = { kind: "free" };
-  for (const r of dayReservations) {
-    if (r.status === "seated") r.tableIds?.forEach((id) => (state[id] = { kind: "seated", r }));
-  }
-  const upcoming = dayReservations.filter((r) => r.status === "confirmed").sort((a, b) => toMinutes(a.time) - toMinutes(b.time));
-  for (const r of upcoming) {
-    r.tableIds?.forEach((id) => {
-      if (state[id]?.kind === "free") state[id] = { kind: "reserved", r };
-    });
-  }
-  return state;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,98 +159,6 @@ export function WaitRing({ waited, quoted, size = 64 }: { waited: number; quoted
     </View>
   );
 }
-
-const TABLE_FILL = {
-  free: "bg-surface border-border",
-  reserved: "bg-accent/15 border-accent",
-  seated: "bg-primary border-primary",
-} as const;
-
-/**
- * A table drawn as a floor-plan shape: chairs as dots on the long sides, the label in the
- * middle and an optional status line. With `onPress` the whole shape is one button.
- */
-export function TableShape({
-  table,
-  kind = "free",
-  caption,
-  onPress,
-  className,
-}: {
-  table: DiningTable;
-  kind?: TableState["kind"];
-  caption?: string;
-  /** Omit for a display-only table. */
-  onPress?: () => void;
-  className?: string;
-}) {
-  const perSide = Math.ceil(table.seats / 2);
-  const chairs = (n: number) => (
-    <View className="flex-row justify-center gap-2 h-2">
-      {Array.from({ length: n }, (_, i) => (
-        <View key={i} className={cn("w-4 h-2 rounded-full", kind === "seated" ? "bg-primary/60" : "bg-border")} />
-      ))}
-    </View>
-  );
-  const shape = cn(TABLE_FILL[kind], table.seats >= 6 ? "min-h-[72px]" : "min-h-[60px]");
-  const body = (
-    <>
-      <Text className={cn("font-extrabold", kind === "seated" && "text-background")}>{table.label}</Text>
-      <Text className={cn("text-[11px]", kind === "seated" ? "text-primaryLight" : "text-textMuted")} numberOfLines={1}>
-        {caption ?? `${table.seats} seats`}
-      </Text>
-    </>
-  );
-  return (
-    <View className={cn("gap-1", className)}>
-      {chairs(perSide)}
-      {onPress ? (
-        <Button
-          variant="ghost"
-          className={cn("h-auto flex-col gap-0 rounded-xl border px-1 py-2.5", shape)}
-          onPress={onPress}
-          accessibilityLabel={`${table.label}, ${table.seats} seats, ${kind}`}
-        >
-          {body}
-        </Button>
-      ) : (
-        <View className={cn("items-center justify-center rounded-xl border px-1 py-2.5", shape)}>{body}</View>
-      )}
-      {chairs(table.seats - perSide)}
-    </View>
-  );
-}
-
-/** One counter seat: a round stool. Display-only without `onPress`. */
-export function CounterSeat({ table, kind = "free", onPress }: { table: DiningTable; kind?: TableState["kind"]; onPress?: () => void }) {
-  const cls = cn("w-9 h-9 rounded-full border items-center justify-center", TABLE_FILL[kind]);
-  const label = <Text className={cn("text-xs font-bold", kind === "seated" && "text-background")}>{table.label}</Text>;
-  if (!onPress) return <View className={cls}>{label}</View>;
-  return (
-    <Button variant="ghost" size="icon" className={cls} onPress={onPress} accessibilityLabel={`Counter seat ${table.label}, ${kind}`}>
-      {label}
-    </Button>
-  );
-}
-
-export function Legend({ items }: { items: [cls: string, label: string][] }) {
-  return (
-    <View className="flex-row flex-wrap gap-x-4 gap-y-1">
-      {items.map(([cls, label]) => (
-        <View key={label} className="flex-row items-center gap-1.5">
-          <View className={cn("w-3 h-3 rounded-[4px] border", cls)} />
-          <Text className="text-xs text-textMuted">{label}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-export const FLOOR_LEGEND: [string, string][] = [
-  [TABLE_FILL.free, "Free"],
-  [TABLE_FILL.reserved, "Reserved"],
-  [TABLE_FILL.seated, "Seated"],
-];
 
 // ---------------------------------------------------------------------------
 // Controls

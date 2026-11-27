@@ -6,7 +6,6 @@ import {
   mockReservationSettings,
   mockReservations,
   mockWaitlist,
-  type DiningTable,
   type Reservation,
   type WaitlistEntry,
 } from "@sparkr/shared";
@@ -29,38 +28,30 @@ import {
 import { cn } from "../../../lib/utils";
 import type { BookingsScreenProps } from "../../../navigation/businessTypes";
 import {
-  CounterSeat,
-  FLOOR_LEGEND,
   InfoTile,
-  Legend,
   NOW_MINUTES,
   PartyAvatar,
   STATUS,
   Sheet,
-  TableShape,
   WaitRing,
   counts,
-  floorState,
   formatHour,
   formatTime,
   isLate,
-  tableLabel,
   toMinutes,
-  type TableState,
 } from "./reservationParts";
 
 // Feature 16, modelled on OpenTable / TableWink host stands: a day strip, a covers-by-time
-// chart for the service, then three views — a timeline of bookings, the floor (which
-// tables are free, held or seated) and the live waitlist. Every booking and table opens a
-// bottom sheet with its details and actions, so the lists stay uncluttered.
+// chart for the service, then two views — a timeline of bookings and the live waitlist.
+// Every booking opens a bottom sheet with its details and actions, so the list stays
+// uncluttered.
 
 const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const settings = mockReservationSettings;
-const TABLES = settings.tables;
-const SEATS = TABLES.reduce((n, t) => n + t.seats, 0);
+const SEATS = settings.seats;
 
-type View_ = "timeline" | "floor" | "waitlist";
+type View_ = "timeline" | "waitlist";
 type Filter = "all" | "upcoming" | "seated" | "done";
 
 export default function ReservationsScreen({ navigation }: BookingsScreenProps<"Reservations">) {
@@ -71,7 +62,6 @@ export default function ReservationsScreen({ navigation }: BookingsScreenProps<"
   const [waitlist, setWaitlist] = useState(mockWaitlist);
   const [waitlistOpen, setWaitlistOpen] = useState(settings.waitlistEnabled);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [seating, setSeating] = useState<WaitlistEntry | null>(null);
 
   useHeaderButton(navigation, {
     label: "Settings",
@@ -109,7 +99,7 @@ export default function ReservationsScreen({ navigation }: BookingsScreenProps<"
       },
     ]);
 
-  const seatFromWaitlist = (w: WaitlistEntry, tableIds: string[]) => {
+  const seatFromWaitlist = (w: WaitlistEntry) => {
     setWaitlist((l) => l.filter((x) => x.id !== w.id));
     setReservations((list) => [
       ...list,
@@ -121,13 +111,11 @@ export default function ReservationsScreen({ navigation }: BookingsScreenProps<"
         dayOffset: 0,
         time: formatTime(NOW_MINUTES),
         status: "seated",
-        tableIds,
         phone: w.phone,
         note: w.note,
         source: "walk_in",
       },
     ]);
-    setSeating(null);
   };
 
   return (
@@ -136,27 +124,19 @@ export default function ReservationsScreen({ navigation }: BookingsScreenProps<"
 
       <ServiceCard dayList={dayList} isToday={isToday} day={day} waiting={waitlist.length} />
 
-      <Segmented
-        options={
-          isToday
-            ? ([
-                ["timeline", "Bookings"],
-                ["floor", "Floor"],
-                ["waitlist", `Waitlist · ${waitlist.length}`],
-              ] as const)
-            : ([
-                ["timeline", "Bookings"],
-                ["floor", "Floor"],
-              ] as const)
-        }
-        value={activeView}
-        onChange={setView}
-      />
+      {isToday ? (
+        <Segmented
+          options={[
+            ["timeline", "Bookings"],
+            ["waitlist", `Waitlist · ${waitlist.length}`],
+          ]}
+          value={activeView}
+          onChange={setView}
+        />
+      ) : null}
 
       {activeView === "timeline" ? (
         <Timeline dayList={dayList} isToday={isToday} filter={filter} onFilter={setFilter} onOpen={setOpenId} />
-      ) : activeView === "floor" ? (
-        <Floor dayList={dayList} isToday={isToday} onOpen={setOpenId} />
       ) : (
         <Waitlist
           waitlist={waitlist}
@@ -165,7 +145,12 @@ export default function ReservationsScreen({ navigation }: BookingsScreenProps<"
           onToggleOpen={setWaitlistOpen}
           onNotify={(id) => setWaitlist((l) => l.map((w) => (w.id === id ? { ...w, notified: true } : w)))}
           onRemove={(id) => setWaitlist((l) => l.filter((w) => w.id !== id))}
-          onSeat={setSeating}
+          onSeat={(w) =>
+            Alert.alert(`Seat ${w.name}?`, `Party of ${w.partySize}. They're moved from the waitlist to tonight's bookings.`, [
+              { text: "Not yet", style: "cancel" },
+              { text: "Seat", onPress: () => seatFromWaitlist(w) },
+            ])
+          }
         />
       )}
 
@@ -196,8 +181,6 @@ export default function ReservationsScreen({ navigation }: BookingsScreenProps<"
         }}
         onCancel={cancel}
       />
-
-      <SeatSheet entry={seating} dayList={dayList} onClose={() => setSeating(null)} onSeat={seatFromWaitlist} />
     </Screen>
   );
 }
@@ -432,90 +415,17 @@ function ReservationRow({ r, isToday, onPress }: { r: Reservation; isToday: bool
           {r.source === "phone" ? <Ionicons name="call-outline" size={13} color={colors.textMuted} accessibilityLabel="Phone booking" /> : null}
           {r.source === "walk_in" ? <Ionicons name="walk-outline" size={13} color={colors.textMuted} accessibilityLabel="Walk-in" /> : null}
         </View>
-        {r.tableIds?.length || !done ? (
+        {r.table || !done ? (
           <View className="flex-row items-center gap-1 mt-0.5">
             <Ionicons name="grid-outline" size={11} color={colors.textMuted} />
             <Text className="text-sm text-textMuted" numberOfLines={1}>
-              {tableLabel(r.tableIds, TABLES)}
+              {r.table ?? "No table yet"}
             </Text>
           </View>
         ) : null}
       </View>
       {late ? <Badge label="Late" tone="warning" icon="time-outline" /> : <Badge label={s.label} tone={s.tone} />}
     </Button>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Floor
-// ---------------------------------------------------------------------------
-
-function Floor({ dayList, isToday, onOpen }: { dayList: Reservation[]; isToday: boolean; onOpen: (id: string) => void }) {
-  const state = floorState(TABLES, dayList);
-  const dining = TABLES.filter((t) => t.area === "dining");
-  const counter = TABLES.filter((t) => t.area === "counter");
-  const tally = (k: TableState["kind"]) => TABLES.filter((t) => state[t.id].kind === k).reduce((n, t) => n + t.seats, 0);
-
-  const press = (t: DiningTable) => {
-    const s = state[t.id];
-    if (s.r) onOpen(s.r.id);
-    else notYet(`${t.area === "counter" ? "Counter seat " : ""}${t.label} is free`, "Seat a walk-in here or hold it for a booking.");
-  };
-
-  const caption = (t: DiningTable) => {
-    const s = state[t.id];
-    if (s.kind === "seated") return s.r!.guestName;
-    if (s.kind === "reserved") return s.r!.time.replace(" PM", "p").replace(" AM", "a");
-    return `${t.seats} seats`;
-  };
-
-  return (
-    <View className="gap-4">
-      <View className="flex-row gap-2">
-        {(
-          [
-            ["Seated", tally("seated"), "bg-primary"],
-            ["Reserved", tally("reserved"), "bg-accent"],
-            ["Free", tally("free"), "bg-border"],
-          ] as const
-        ).map(([label, n, dot]) => (
-          <View key={label} className="flex-1 bg-surface rounded-2xl p-3">
-            <View className="flex-row items-center gap-1.5">
-              <View className={cn("w-2 h-2 rounded-full", dot)} />
-              <Text className="text-xs text-textMuted">{label}</Text>
-            </View>
-            <Text className="text-xl font-extrabold mt-1">
-              {n}
-              <Text className="text-xs text-textMuted font-normal"> seats</Text>
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      <Card className="gap-5">
-        <View className="flex-row items-center justify-between">
-          <Text className="font-bold">Dining room</Text>
-          <Text className="text-xs text-textMuted">{isToday ? `As of ${formatTime(NOW_MINUTES)}` : "Held for bookings"}</Text>
-        </View>
-        <View className="flex-row flex-wrap justify-between gap-y-4">
-          {dining.map((t) => (
-            <TableShape key={t.id} table={t} kind={state[t.id].kind} caption={caption(t)} onPress={() => press(t)} className="w-[30%]" />
-          ))}
-        </View>
-
-        <View className="gap-2">
-          <Text className="font-bold">Sushi counter</Text>
-          <View className="flex-row justify-between">
-            {counter.map((t) => (
-              <CounterSeat key={t.id} table={t} kind={state[t.id].kind} onPress={() => press(t)} />
-            ))}
-          </View>
-          <View className="h-3 rounded-full bg-primary/80" />
-        </View>
-
-        <Legend items={FLOOR_LEGEND} />
-      </Card>
-    </View>
   );
 }
 
@@ -579,7 +489,7 @@ function Waitlist({
       {nextFree ? (
         <InfoBanner
           icon="hourglass-outline"
-          text={`Next table frees up around ${formatTime(nextFree.at)} (${tableLabel(nextFree.r.tableIds, TABLES)}, ${nextFree.r.guestName}).`}
+          text={`Next table frees up around ${formatTime(nextFree.at)} (${nextFree.r.table ? `${nextFree.r.table}, ` : ""}${nextFree.r.guestName}).`}
         />
       ) : null}
 
@@ -719,7 +629,7 @@ function ReservationSheet({
       <View className="flex-row gap-2">
         <InfoTile icon="time-outline" label="Time" value={r.time} />
         <InfoTile icon="people-outline" label="Party" value={`${r.partySize} guests`} />
-        <InfoTile icon="grid-outline" label="Table" value={tableLabel(r.tableIds, TABLES)} />
+        <InfoTile icon="grid-outline" label="Table" value={r.table ?? "Not set"} />
       </View>
 
       {r.note ? (
@@ -790,60 +700,6 @@ function ReservationSheet({
       ) : (
         <Text className="text-sm text-textMuted text-center">This booking is {s.label.toLowerCase()}.</Text>
       )}
-    </Sheet>
-  );
-}
-
-/** Pick a free table for a waitlist party: dining tables that fit, smallest first. */
-function SeatSheet({
-  entry,
-  dayList,
-  onClose,
-  onSeat,
-}: {
-  entry: WaitlistEntry | null;
-  dayList: Reservation[];
-  onClose: () => void;
-  onSeat: (w: WaitlistEntry, tableIds: string[]) => void;
-}) {
-  if (!entry) return <Sheet visible={false} onClose={onClose}>{null}</Sheet>;
-  const state = floorState(TABLES, dayList);
-  const fits = TABLES.filter((t) => t.area === "dining" && t.seats >= entry.partySize && state[t.id].kind !== "seated").sort(
-    (a, b) => a.seats - b.seats || Number(state[a.id].kind === "reserved") - Number(state[b.id].kind === "reserved")
-  );
-  const freeCounter = TABLES.filter((t) => t.area === "counter" && state[t.id].kind === "free");
-  const counterPick = entry.partySize <= 2 && freeCounter.length >= entry.partySize ? freeCounter.slice(0, entry.partySize) : null;
-
-  return (
-    <Sheet visible onClose={onClose} title={`Seat ${entry.name}`}>
-      <Text className="text-textMuted">
-        Party of {entry.partySize}. Tables that fit, smallest first. The guest gets a "your table is ready" text.
-      </Text>
-      <View className="flex-row flex-wrap justify-between gap-y-4">
-        {fits.map((t, i) => {
-          const held = state[t.id].r;
-          return (
-            <View key={t.id} className="w-[30%]">
-              <TableShape
-                table={t}
-                kind={state[t.id].kind}
-                caption={held ? `Held ${held.time.replace(" PM", "p")}` : i === 0 ? "Best fit" : `${t.seats} seats`}
-                onPress={() => onSeat(entry, [t.id])}
-              />
-            </View>
-          );
-        })}
-        {fits.length % 3 ? Array.from({ length: 3 - (fits.length % 3) }, (_, i) => <View key={i} className="w-[30%]" />) : null}
-      </View>
-      {counterPick ? (
-        <Button variant="outline" size="lg" onPress={() => onSeat(entry, counterPick.map((t) => t.id))}>
-          <Ionicons name="fish-outline" size={17} color={colors.text} />
-          <Text>Sushi counter · {tableLabel(counterPick.map((t) => t.id), TABLES)}</Text>
-        </Button>
-      ) : null}
-      {fits.length === 0 && !counterPick ? (
-        <EmptyState icon="grid-outline" title="No table fits right now" detail="Text the guest when a table frees up." />
-      ) : null}
     </Sheet>
   );
 }

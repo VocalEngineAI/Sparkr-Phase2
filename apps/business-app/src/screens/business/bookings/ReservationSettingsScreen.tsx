@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Alert, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@sparkr/ui";
-import { mockReservationSettings, type DiningTable, type ReservationSettings } from "@sparkr/shared";
+import { mockReservationSettings, type ReservationSettings } from "@sparkr/shared";
 import {
   Button,
   Card,
@@ -17,10 +17,10 @@ import {
   Text,
 } from "../../../components/business/kit";
 import { cn } from "../../../lib/utils";
-import { CounterSeat, Sheet, Stepper, TableShape, formatDuration, formatHour, formatTime } from "./reservationParts";
+import { Stepper, formatDuration, formatHour, formatTime } from "./reservationParts";
 
-// Feature 16 setup, laid out like OpenTable's availability settings: the floor (capacity is
-// the seats on it), service hours with the bookable times they produce, turn time and
+// Feature 16 setup, laid out like OpenTable's availability settings: capacity (tables and
+// seats), service hours with the bookable times they produce, turn time and
 // pacing, party sizes, how far ahead guests can book, waitlist, deposits (party-size
 // threshold, fixed or per person), the cancellation / no-show policy, and $0.25 special
 // reservations.
@@ -30,12 +30,9 @@ const PARTY_SCALE = 12;
 
 export default function ReservationSettingsScreen() {
   const [s, setS] = useState<ReservationSettings>(mockReservationSettings);
-  const [editing, setEditing] = useState<string | null>(null);
   const set = <K extends keyof ReservationSettings>(k: K) => (v: ReservationSettings[K]) => setS((p) => ({ ...p, [k]: v }));
 
-  const dining = s.tables.filter((t) => t.area === "dining");
-  const counter = s.tables.filter((t) => t.area === "counter");
-  const seats = s.tables.reduce((n, t) => n + t.seats, 0);
+  const seats = s.seats;
 
   // Bookable times: every interval from opening until the last seating that still fits a
   // full turn before close.
@@ -43,20 +40,6 @@ export default function ReservationSettingsScreen() {
   const times: number[] = [];
   for (let t = s.serviceStart * 60; t <= lastSeating; t += s.intervalMinutes) times.push(t);
   const perHour = s.maxCoversPerInterval * (60 / s.intervalMinutes);
-
-  const setTables = (tables: DiningTable[]) => setS((p) => ({ ...p, tables }));
-  const addTable = () => {
-    const n = dining.reduce((m, t) => Math.max(m, Number(t.id.slice(1)) || 0), 0) + 1;
-    const t: DiningTable = { id: `T${n}`, label: `T${n}`, seats: 4, area: "dining" };
-    setTables([...dining, t, ...counter]);
-    setEditing(t.id);
-  };
-  const setCounterSeats = (n: number) =>
-    setTables([
-      ...dining,
-      ...Array.from({ length: n }, (_, i) => ({ id: `C${i + 1}`, label: String(i + 1), seats: 1, area: "counter" as const })),
-    ]);
-  const editingTable = s.tables.find((t) => t.id === editing) ?? null;
 
   // Same warning as on each booking, shown when deposits are switched on (slide 33).
   const toggleDeposits = (on: boolean) => {
@@ -75,8 +58,8 @@ export default function ReservationSettingsScreen() {
 
   return (
     <Screen>
-      {/* ---------------- Floor & capacity ---------------- */}
-      <Section title="Floor & capacity">
+      {/* ---------------- Capacity ---------------- */}
+      <Section title="Capacity">
         <Card tone="primary" className="p-5 mb-3">
           <View className="flex-row items-end justify-between">
             <View>
@@ -87,42 +70,14 @@ export default function ReservationSettingsScreen() {
               </View>
             </View>
             <View className="items-end gap-1">
-              <CapacityStat icon="grid-outline" text={`${dining.length} tables`} />
-              <CapacityStat icon="fish-outline" text={`${counter.length} counter seats`} />
+              <CapacityStat icon="grid-outline" text={`${s.tables} tables`} />
+              <CapacityStat icon="people-outline" text={`~${(seats / Math.max(1, s.tables)).toFixed(1).replace(/\.0$/, "")} per table`} />
             </View>
           </View>
         </Card>
-
-        <Card className="gap-5">
-          <View className="flex-row items-center justify-between">
-            <Text className="font-bold">Dining room</Text>
-            <Text className="text-xs text-textMuted">Tap a table to edit</Text>
-          </View>
-          <View className="flex-row flex-wrap justify-between gap-y-4">
-            {dining.map((t) => (
-              <TableShape key={t.id} table={t} onPress={() => setEditing(t.id)} className="w-[30%]" />
-            ))}
-            <View className="w-[30%] justify-center pt-3">
-              <Button variant="outline" className="h-[60px] flex-col gap-0.5 rounded-xl border-dashed" onPress={addTable}>
-                <Ionicons name="add" size={18} color={colors.text} />
-                <Text className="text-xs">Add table</Text>
-              </Button>
-            </View>
-            {(dining.length + 1) % 3 ? Array.from({ length: 3 - ((dining.length + 1) % 3) }, (_, i) => <View key={i} className="w-[30%]" />) : null}
-          </View>
-
-          <View className="gap-2">
-            <Text className="font-bold">Sushi counter</Text>
-            <View className="flex-row flex-wrap justify-between gap-y-2">
-              {counter.map((t) => (
-                <CounterSeat key={t.id} table={t} />
-              ))}
-            </View>
-            <View className="h-3 rounded-full bg-primary/80" />
-          </View>
-        </Card>
-        <ListCard className="mt-3">
-          <Stepper label="Counter seats" value={counter.length} onChange={setCounterSeats} min={0} max={16} last />
+        <ListCard>
+          <Stepper label="Tables" value={s.tables} onChange={set("tables")} min={1} max={100} />
+          <Stepper label="Seats" hint="Guests you can host at once" value={s.seats} onChange={set("seats")} min={s.tables} max={500} step={2} last />
         </ListCard>
       </Section>
 
@@ -315,46 +270,13 @@ export default function ReservationSettingsScreen() {
       </Section>
 
       <Text className="text-xs text-textMuted text-center -mt-4">
-        Not included: free-form floor-plan designer, OpenTable sync, or automatic deposit refunds.
+        Not included: floor-plan designer, OpenTable sync, or automatic deposit refunds.
       </Text>
 
       <Button size="lg" onPress={() => Alert.alert("Saved", "Booking settings updated.")}>
         <Text>Save settings</Text>
       </Button>
 
-      <Sheet visible={!!editingTable} onClose={() => setEditing(null)} title={editingTable ? `Table ${editingTable.label}` : ""}>
-        {editingTable ? (
-          <>
-            <View className="items-center py-2">
-              <View className="w-32">
-                <TableShape table={editingTable} />
-              </View>
-            </View>
-            <ListCard>
-              <Stepper
-                label="Seats"
-                value={editingTable.seats}
-                onChange={(v) => setTables(s.tables.map((t) => (t.id === editingTable.id ? { ...t, seats: v } : t)))}
-                min={1}
-                max={12}
-                last
-              />
-            </ListCard>
-            <Button size="lg" onPress={() => setEditing(null)}>
-              <Text>Done</Text>
-            </Button>
-            <Button
-              variant="ghost"
-              onPress={() => {
-                setTables(s.tables.filter((t) => t.id !== editingTable.id));
-                setEditing(null);
-              }}
-            >
-              <Text className="text-warning">Remove table</Text>
-            </Button>
-          </>
-        ) : null}
-      </Sheet>
     </Screen>
   );
 }
