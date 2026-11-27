@@ -9,15 +9,17 @@ export type Reservation = {
   /** Day offset from today, for the date strip. */
   dayOffset: number;
   time: string;
-  status: "confirmed" | "seated" | "cancelled" | "no_show";
-  table?: string;
+  /** confirmed → seated → finished (table cleared); or cancelled / no_show. */
+  status: "confirmed" | "seated" | "finished" | "cancelled" | "no_show";
+  /** Tables (ids from `ReservationSettings.tables`) the party is assigned to. */
+  tableIds?: string[];
   phone?: string;
   /** Deposit collected in-app, if the business has deposits enabled. */
   deposit?: number;
   vip?: boolean;
   note?: string;
-  /** "app" = booked in Sparkr; "phone" = entered manually by staff. */
-  source: "app" | "phone";
+  /** "app" = booked in Sparkr; "phone" = entered by staff; "walk_in" = seated from the door or waitlist. */
+  source: "app" | "phone" | "walk_in";
   /** $0.25 special reservation (slide 31). */
   special?: boolean;
 };
@@ -26,14 +28,42 @@ export type WaitlistEntry = {
   id: string;
   name: string;
   partySize: number;
-  quotedWait: string;
-  joined: string;
+  /** Wait quoted to the guest when they joined. */
+  quotedMinutes: number;
+  /** Minutes waited so far (when the mock loads; the screen keeps counting). */
+  waitedMinutes: number;
+  phone?: string;
+  note?: string;
+  /** "app" = joined from the Sparkr app; "walk_in" = added by staff at the door. */
+  source: "app" | "walk_in";
+  /** Guest has been texted that their table is ready. */
+  notified?: boolean;
+};
+
+/** One table (or one counter seat) on the floor. */
+export type DiningTable = {
+  id: string;
+  label: string;
+  seats: number;
+  area: "dining" | "counter";
 };
 
 export type ReservationSettings = {
-  tables: number;
-  seats: number;
-  slotMinutes: number;
+  /** The floor: capacity is the sum of these seats. */
+  tables: DiningTable[];
+  /** Service hours, as hours on a 24h clock (17 = 5 PM). */
+  serviceStart: number;
+  serviceEnd: number;
+  /** How long a party holds its table. */
+  turnMinutes: number;
+  /** Bookable times are offered every N minutes. */
+  intervalMinutes: 15 | 30;
+  /** Pacing: most guests that can be booked to arrive in one interval. */
+  maxCoversPerInterval: number;
+  minParty: number;
+  maxParty: number;
+  /** How many days ahead guests can book. */
+  bookingWindowDays: number;
   waitlistEnabled: boolean;
   depositsEnabled: boolean;
   /** Minimum party size that requires a deposit. */
