@@ -6,6 +6,7 @@ import type {
   Deal,
   GiftCardProduct,
   GooglePost,
+  GoogleReputation,
   GoogleReview,
   InfluencerPerformance,
   InfluencerProfile,
@@ -287,13 +288,71 @@ export const mockGoogleReviews: GoogleReview[] = [
     time: "5 days ago",
     aiReply: "Thanks, Marcus! Happy hour runs 4–6 PM every weekday.",
   },
+  {
+    id: "gr_5",
+    author: "Jenna R.",
+    rating: 5,
+    text: "Omakase was flawless from start to finish. The uni course alone is worth the trip downtown.",
+    time: "1 week ago",
+    aiReply: "Thank you, Jenna! The uni is Chef Tang's favourite course too. Hope to see you at the counter again soon.",
+  },
+  {
+    id: "gr_6",
+    author: "Tom H.",
+    rating: 1,
+    text: "Takeout order was wrong twice in one week. Food is good when it's right, but that's not acceptable.",
+    time: "1 week ago",
+    aiReply: "We're sorry, Tom. Two wrong orders is on us. Please message us and we'll make it right.",
+  },
+  {
+    id: "gr_7",
+    author: "Wei L.",
+    rating: 4,
+    text: "Great sake list and the staff know it well. Portions on the chirashi could be bigger.",
+    time: "2 weeks ago",
+    aiReply: "Thanks, Wei! Glad the sake pairings landed. We'll pass the chirashi note to the kitchen.",
+  },
 ];
 
 export const mockGooglePosts: GooglePost[] = [
-  { id: "gp_1", title: "Winter roll is here", kind: "update", time: "2 days ago", views: 1240 },
-  { id: "gp_2", title: "$5 hand rolls, weekdays 4–6 PM", kind: "offer", time: "1 week ago", views: 2810 },
-  { id: "gp_3", title: "Omakase Night with Chef Tang", kind: "event", time: "2 weeks ago", views: 1975 },
+  {
+    id: "gp_1",
+    title: "Winter roll is here",
+    kind: "update",
+    body: "Torched yellowtail, yuzu kosho and crispy shallot. On the menu all December at the Grand St counter.",
+    time: "2 days ago",
+    views: 1240,
+  },
+  {
+    id: "gp_2",
+    title: "$5 hand rolls, weekdays 4–6 PM",
+    kind: "offer",
+    body: "Happy hour is back. $5 hand rolls and half-price sake flights, Monday to Friday 4–6 PM. Walk-ins welcome.",
+    time: "1 week ago",
+    views: 2810,
+  },
+  {
+    id: "gp_3",
+    title: "Omakase Night with Chef Tang",
+    kind: "event",
+    body: "Twelve courses, one counter, Saturday Dec 6 at 7 PM. Seats are limited — book in the Sparkr app.",
+    time: "2 weeks ago",
+    views: 1975,
+  },
 ];
+
+export const mockGoogleReputation: GoogleReputation = {
+  replyRatePct: 96,
+  avgReplyTime: "1.8h",
+  volume: [
+    { month: "Jun", count: 22 },
+    { month: "Jul", count: 31 },
+    { month: "Aug", count: 27 },
+    { month: "Sep", count: 35 },
+    { month: "Oct", count: 41 },
+    { month: "Nov", count: 38 },
+  ],
+};
 
 export const mockGoogleProfileStats: PerformanceHighlight[] = [
   { id: "gs_1", label: "Profile views", value: "8,420", changePct: 11 },

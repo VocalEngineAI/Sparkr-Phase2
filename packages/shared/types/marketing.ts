@@ -90,8 +90,22 @@ export type GooglePost = {
   id: string;
   title: string;
   kind: "update" | "offer" | "event";
+  /** Post body (what the composer edits). */
+  body?: string;
   time: string;
   views: number;
+};
+
+/** Voice the AI uses when replying to reviews as the owner. */
+export type GoogleReplyTone = "warm" | "professional" | "playful" | "concise";
+
+export type GoogleReputation = {
+  /** Share of reviews that have an owner reply. */
+  replyRatePct: number;
+  /** Typical time from review to reply, display string. */
+  avgReplyTime: string;
+  /** New reviews per month, oldest first (same months as the rating trend). */
+  volume: { month: string; count: number }[];
 };
 
 // --- Social media management ------------------------------------------------

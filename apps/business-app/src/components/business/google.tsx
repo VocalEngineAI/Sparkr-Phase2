@@ -10,7 +10,23 @@
 // `ReduceMotion.System`, so it's skipped when the OS reduce-motion setting is on.
 
 import React, { useEffect } from "react";
-import { ActivityIndicator, Switch, Text as RNText, View, type TextProps, type TextStyle, type ViewStyle } from "react-native";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text as RNText,
+  TextInput,
+  View,
+  type TextInputProps,
+  type TextProps,
+  type TextStyle,
+  type ViewStyle,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import Animated, {
   Easing,
@@ -494,5 +510,189 @@ export function GSection({
       </Button>
       {open ? <Expand style={{ paddingTop: 4, paddingBottom: 8 }}>{children}</Expand> : null}
     </Reveal>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inputs
+// ---------------------------------------------------------------------------
+
+/** Material outlined text field: 1px grey border, 2px blue when focused. */
+export function GTextField({
+  label,
+  multiline,
+  minHeight,
+  style,
+  editable = true,
+  ...props
+}: TextInputProps & { label?: string; minHeight?: number }) {
+  const [focused, setFocused] = React.useState(false);
+  const inset = focused ? 11 : 12;
+  return (
+    <View>
+      {label ? (
+        <GText variant="caption" weight="medium" color={focused ? G.blueText : G.textSecondary} style={{ marginBottom: 6 }}>
+          {label}
+        </GText>
+      ) : null}
+      <TextInput
+        {...props}
+        multiline={multiline}
+        editable={editable}
+        placeholderTextColor={G.textSecondary}
+        onFocus={(e) => {
+          setFocused(true);
+          props.onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          props.onBlur?.(e);
+        }}
+        style={[
+          gFont("regular"),
+          {
+            minHeight: minHeight ?? (multiline ? 88 : 48),
+            maxHeight: multiline ? 200 : undefined,
+            fontSize: 14,
+            lineHeight: 20,
+            color: G.text,
+            backgroundColor: G.bg,
+            borderRadius: 8,
+            borderWidth: focused ? 2 : 1,
+            borderColor: focused ? G.blue : G.border,
+            paddingHorizontal: inset,
+            paddingTop: multiline ? inset : 0,
+            paddingBottom: multiline ? inset : 0,
+            textAlignVertical: multiline ? "top" : "center",
+            opacity: editable ? 1 : 0.6,
+          },
+          style,
+        ]}
+      />
+    </View>
+  );
+}
+
+/** Rounded grey search pill, like the search bar in Google's apps. */
+export function GSearchField({ value, onChangeText, placeholder }: { value: string; onChangeText: (v: string) => void; placeholder: string }) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: G.surfacePressed, borderRadius: 999, height: 44, paddingLeft: 14, paddingRight: 6, gap: 8 }}>
+      <MaterialIcons name="search" size={20} color={G.textSecondary} />
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={G.textSecondary}
+        returnKeyType="search"
+        accessibilityLabel={placeholder}
+        style={[gFont("regular"), { flex: 1, fontSize: 15, color: G.text, paddingVertical: 0, height: 44 }]}
+      />
+      {value ? <GIconButton icon="close" label="Clear search" onPress={() => onChangeText("")} /> : null}
+    </View>
+  );
+}
+
+/** Selectable list row with a Material radio or checkbox glyph. */
+export function GChoiceRow({
+  title,
+  subtitle,
+  selected,
+  onPress,
+  kind = "radio",
+}: {
+  title: string;
+  subtitle?: string;
+  selected: boolean;
+  onPress: () => void;
+  kind?: "radio" | "checkbox";
+}) {
+  const icon: MaterialIconName =
+    kind === "radio" ? (selected ? "radio-button-checked" : "radio-button-unchecked") : selected ? "check-box" : "check-box-outline-blank";
+  return (
+    <Button
+      variant="ghost"
+      className="h-auto -mx-2 flex-row items-center justify-start gap-0 rounded-xl px-2 py-3 active:bg-[#F8F9FA]"
+      onPress={onPress}
+      accessibilityRole={kind}
+      accessibilityState={{ checked: selected }}
+    >
+      <MaterialIcons name={icon} size={24} color={selected ? G.blueText : G.textSecondary} />
+      <View style={{ flex: 1, marginLeft: 14 }}>
+        <GText variant="headline" weight="regular">
+          {title}
+        </GText>
+        {subtitle ? <GText variant="caption">{subtitle}</GText> : null}
+      </View>
+    </Button>
+  );
+}
+
+/** Compact stat (icon, value, label) for a row of three. */
+export function GMiniStat({ value, label, icon }: { value: string; label: string; icon: MaterialIconName }) {
+  return (
+    <View style={{ flex: 1, backgroundColor: G.surface, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 8, alignItems: "center", gap: 2 }}>
+      <MaterialIcons name={icon} size={18} color={G.blueText} />
+      <GText variant="headline" style={{ marginTop: 2 }}>
+        {value}
+      </GText>
+      <GText variant="caption" numberOfLines={1}>
+        {label}
+      </GText>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Bottom sheet
+// ---------------------------------------------------------------------------
+
+/**
+ * Material bottom sheet (modal). Backdrop tap and the close button dismiss it; `footer`
+ * holds the action buttons and stays above the keyboard.
+ */
+export function GSheet({
+  visible,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, justifyContent: "flex-end" }}>
+        {/* Backdrop: a plain Pressable on purpose — it's a scrim, not a button. */}
+        <Pressable
+          onPress={onClose}
+          accessibilityLabel="Close"
+          accessibilityRole="button"
+          style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "rgba(32,33,36,0.45)" }}
+        />
+        <View style={{ backgroundColor: G.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: insets.bottom + 12, maxHeight: "92%" }}>
+          <View style={{ alignSelf: "center", width: 32, height: 4, borderRadius: 2, backgroundColor: G.border, marginTop: 10 }} />
+          <View style={{ flexDirection: "row", alignItems: "center", paddingLeft: 20, paddingRight: 10, paddingTop: 12, paddingBottom: 4 }}>
+            <View style={{ flex: 1 }}>
+              <GText variant="title">{title}</GText>
+              {subtitle ? <GText variant="caption">{subtitle}</GText> : null}
+            </View>
+            <GIconButton icon="close" label="Close" onPress={onClose} />
+          </View>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 }}>
+            {children}
+          </ScrollView>
+          {footer ? (
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 8, paddingHorizontal: 20, paddingTop: 12 }}>{footer}</View>
+          ) : null}
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
